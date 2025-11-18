@@ -1,0 +1,6 @@
+/* App specific styles - keeping minimal to match Next.js approach */
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
