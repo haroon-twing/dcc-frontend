@@ -329,7 +329,7 @@ const PIFTACReports: React.FC = () => {
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-2xl font-bold">PIFTAC Reports</CardTitle>
+                <CardTitle className="text-3xl font-bold text-foreground">PIFTAC Reports</CardTitle>
                 <p className="text-muted-foreground mt-1">Manage PIFTAC reports</p>
               </div>
               <Button onClick={handleAdd} className="flex items-center gap-2">

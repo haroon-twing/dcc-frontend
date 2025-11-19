@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, Pencil, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/UI/Table';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/UI/card';
@@ -38,6 +39,7 @@ const buildInitialForm = (): IntelligenceCycleFormState => ({
 });
 
 const IntelligenceCycleList: React.FC = () => {
+  const navigate = useNavigate();
   const [records, setRecords] = useState<IntelligenceCycle[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [showModal, setShowModal] = useState(false);
@@ -115,46 +117,14 @@ const IntelligenceCycleList: React.FC = () => {
       return;
     }
 
-    setLoadingView(true);
-    setShowModal(true);
-    setIsViewMode(true);
-    setViewingRecord(record);
-    setEditingRecord(null);
-
     try {
-      // TODO: Replace with actual API endpoint when available
-      // const response = await publicApi.get(`/intelligence-cycle/get-single-intelligence-cycle/${recordId}`);
-      // const data = response.data?.data || response.data;
-      
-      // Fetch a single record from backend
-      const response = await publicApi.get(`/intl-cycle/get-single/${recordId}`);
-      const data = (response?.data?.data ?? response?.data ?? null) as any;
-      
-      if (data) {
-        setFormData({
-          is_publication_province_intl_estimate: data.is_publication_province_intl_estimate || false,
-          is_prep_action_plan: data.is_prep_action_plan || false,
-          is_prep_m_e_framework: data.is_prep_m_e_framework || false,
-          percent_completion_action_plan: data.percent_completion_action_plan || 0,
-          is_connectivity_concerned_dept: data.is_connectivity_concerned_dept || false,
-          is_prep_local_resp_mech: data.is_prep_local_resp_mech || false,
-          no_alerts_recvd: data.no_alerts_recvd || 0,
-          no_alerts_deduct_false: data.no_alerts_deduct_false || 0,
-          no_alerts_disposedof: data.no_alerts_disposedof || 0,
-          is_prep_eval_report_local_affect: data.is_prep_eval_report_local_affect || false,
-        });
-      } else {
-        window.alert('No data received from server');
-        setShowModal(false);
-      }
+      setLoadingView(true);
+      // Optional: pre-fetch to ensure record exists
+      await publicApi.get(`/intl-cycle/get-single/${recordId}`);
+      navigate(`/intelligence-cycle/list/details?id=${recordId}`);
     } catch (err: any) {
       console.error('Error fetching intelligence cycle details:', err);
-      window.alert(
-        err?.response?.data?.message ||
-        err?.message ||
-        'Failed to load intelligence cycle details. Please try again.'
-      );
-      setShowModal(false);
+      window.alert(err?.response?.data?.message || err?.message || 'Failed to load intelligence cycle details.');
     } finally {
       setLoadingView(false);
     }
