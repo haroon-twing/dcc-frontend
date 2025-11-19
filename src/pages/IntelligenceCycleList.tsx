@@ -70,8 +70,10 @@ const IntelligenceCycleList: React.FC = () => {
       // const response = await publicApi.get('/intelligence-cycle/get-all-intelligence-cycles');
       // const data = response.data?.data || response.data || [];
       
-      // Placeholder: Empty array for now
-      const data: IntelligenceCycle[] = [];
+      // Fetch records from backend
+      const response = await publicApi.get('/intl-cycle/get-all');
+      const raw = (response?.data?.data ?? response?.data ?? []) as any;
+      const data: any[] = Array.isArray(raw) ? raw : (raw?.items ?? []);
       
       // Map the API response to our interface
       const mappedData: IntelligenceCycle[] = data.map((item: any) => ({
@@ -124,8 +126,9 @@ const IntelligenceCycleList: React.FC = () => {
       // const response = await publicApi.get(`/intelligence-cycle/get-single-intelligence-cycle/${recordId}`);
       // const data = response.data?.data || response.data;
       
-      // For now, use the record data directly
-      const data = record;
+      // Fetch a single record from backend
+      const response = await publicApi.get(`/intl-cycle/get-single/${recordId}`);
+      const data = (response?.data?.data ?? response?.data ?? null) as any;
       
       if (data) {
         setFormData({
@@ -180,7 +183,9 @@ const IntelligenceCycleList: React.FC = () => {
     const recordId = record._id || record.id;
     if (recordId) {
       setRecordToDeleteId(recordId);
-      setRecordToDeleteName(`Intelligence Cycle ID: ${recordId}`);
+      // Prefer a human-friendly name if present; otherwise fall back to ID
+      const displayName = (record as any).name || (record as any).title || (record as any).category || `ID: ${recordId}`;
+      setRecordToDeleteName(String(displayName));
       setShowDeleteModal(true);
     }
   };
@@ -191,6 +196,7 @@ const IntelligenceCycleList: React.FC = () => {
       // TODO: Replace with actual API endpoint when available
       // const deleteEndpoint = `/intelligence-cycle/delete-intelligence-cycle/${id}`;
       // await api.delete(deleteEndpoint);
+      await api.delete(`/intl-cycle/delete/${id}`);
       
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
@@ -234,10 +240,12 @@ const IntelligenceCycleList: React.FC = () => {
         // TODO: Replace with actual API endpoint when available
         // const updateEndpoint = `/intelligence-cycle/update-intelligence-cycle/${recordId}`;
         // await api.put(updateEndpoint, payload);
+        await api.put(`/intl-cycle/update/${recordId}`, payload);
       } else {
         // TODO: Replace with actual API endpoint when available
         // const addEndpoint = '/intelligence-cycle/add-intelligence-cycle';
         // await api.post(addEndpoint, payload);
+        await api.post('/intl-cycle/add', payload);
       }
 
       // Refetch data after add/edit
@@ -619,7 +627,7 @@ const IntelligenceCycleList: React.FC = () => {
         open={showDeleteModal}
         onOpenChange={setShowDeleteModal}
         id={recordToDeleteId}
-        message={`Are you sure you want to delete "${recordToDeleteName}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete this record? This action cannot be undone.`}
         onSubmit={handleDeleteSubmit}
         deleting={deleting}
         title="Delete Intelligence Cycle"
