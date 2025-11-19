@@ -76,12 +76,12 @@ const SourceReliabilityIndexFormModal: React.FC<SourceReliabilityIndexFormModalP
             </label>
             <Input
               id="intl_recvd_month"
-              type="text"
+              type="date"
               value={formData.intl_recvd_month || ''}
               onChange={(e) => handleChange('intl_recvd_month', e.target.value)}
               disabled={viewMode}
               required
-              placeholder="Enter intelligence received month"
+              placeholder="Select intelligence received date"
             />
           </div>
 

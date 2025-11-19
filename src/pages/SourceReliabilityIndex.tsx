@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, Pencil, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/UI/Table';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/UI/card';
@@ -33,15 +34,13 @@ const SourceReliabilityIndex: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [showModal, setShowModal] = useState(false);
   const [editingRecord, setEditingRecord] = useState<SourceReliability | null>(null);
-  const [viewingRecord, setViewingRecord] = useState<SourceReliability | null>(null);
-  const [isViewMode, setIsViewMode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [recordToDeleteId, setRecordToDeleteId] = useState<string | number | undefined>(undefined);
   const [recordToDeleteName, setRecordToDeleteName] = useState<string>('');
   const [deleting, setDeleting] = useState<boolean>(false);
   const [formData, setFormData] = useState<SourceReliabilityIndexFormState>(buildInitialForm());
-  const [loadingView, setLoadingView] = useState<boolean>(false);
+  const navigate = useNavigate();
   
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortColumn, setSortColumn] = useState<string | null>(null);
@@ -74,12 +73,10 @@ const SourceReliabilityIndex: React.FC = () => {
   const handleAdd = () => {
     setFormData(buildInitialForm());
     setEditingRecord(null);
-    setViewingRecord(null);
-    setIsViewMode(false);
     setShowModal(true);
   };
 
-  const handleView = async (record: SourceReliability) => {
+  const handleView = (record: SourceReliability) => {
     const recordId = record._id || record.id;
     if (!recordId) {
       window.alert('Record ID is required to view details');
@@ -139,8 +136,6 @@ const SourceReliabilityIndex: React.FC = () => {
       remarks: record.remarks || '',
     });
     setEditingRecord(record);
-    setViewingRecord(null);
-    setIsViewMode(false);
     setShowModal(true);
   };
 
@@ -156,10 +151,16 @@ const SourceReliabilityIndex: React.FC = () => {
   const handleDeleteSubmit = async (id: string | number) => {
     setDeleting(true);
     try {
+<<<<<<< HEAD
+      const deleteEndpoint = `/intl-cycle-src-reliability-info-credibility-indices/delete-intl-cycle-src-reliability-info-credibility-index/${id}`;
+      await api.delete(deleteEndpoint);
+=======
       await publicApi.delete(`/intl-cycle-src-reliability-info-credibility-indices/delete-intl-cycle-src-reliability-info-credibility-index/${id}`);
+>>>>>>> 1725b3ea1c38c445fd436fcf15a8e8d3987e4d59
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
       setRecordToDeleteName('');
+      window.alert('Source reliability record deleted successfully!');
       await fetchRecords();
     } catch (error: any) {
       console.error('Error deleting record:', error);
@@ -174,22 +175,38 @@ const SourceReliabilityIndex: React.FC = () => {
     setSubmitting(true);
 
     try {
+      const payload = {
+        source: formData.source,
+        intl_recvd_month: formData.intl_recvd_month,
+        source_reliability: formData.source_reliability,
+        info_credibility: formData.info_credibility,
+        remarks: formData.remarks,
+      };
+
       if (editingRecord) {
         const recordId = editingRecord._id || editingRecord.id;
         if (!recordId) {
           window.alert('Record ID is required for update');
           return;
         }
+<<<<<<< HEAD
+        const updateEndpoint = `/intl-cycle-src-reliability-info-credibility-indices/update-intl-cycle-src-reliability-info-credibility-index/${recordId}`;
+        await api.put(updateEndpoint, payload);
+        window.alert('Source reliability record updated successfully!');
+      } else {
+        const addEndpoint = '/intl-cycle-src-reliability-info-credibility-indices/add-intl-cycle-src-reliability-info-credibility-index';
+        await api.post(addEndpoint, payload);
+        window.alert('Source reliability record added successfully!');
+=======
         await publicApi.put(`/intl-cycle-src-reliability-info-credibility-indices/update-intl-cycle-src-reliability-info-credibility-index/${recordId}`, formData);
       } else {
         await publicApi.post('/intl-cycle-src-reliability-info-credibility-indices/add-intl-cycle-src-reliability-info-credibility-index', formData);
+>>>>>>> 1725b3ea1c38c445fd436fcf15a8e8d3987e4d59
       }
       
       setShowModal(false);
       setFormData(buildInitialForm());
       setEditingRecord(null);
-      setViewingRecord(null);
-      setIsViewMode(false);
       await fetchRecords();
     } catch (error: any) {
       console.error('Error saving source reliability:', error);
@@ -421,22 +438,18 @@ const SourceReliabilityIndex: React.FC = () => {
       <SourceReliabilityIndexFormModal
         open={showModal}
         onOpenChange={(open) => {
-          if (!open && !submitting && !loadingView) {
+          if (!open && !submitting) {
             setShowModal(false);
             setFormData(buildInitialForm());
             setEditingRecord(null);
-            setViewingRecord(null);
-            setIsViewMode(false);
           }
         }}
         formData={formData}
         setFormData={setFormData}
         onSubmit={handleSubmit}
-        title={isViewMode ? 'View Source Reliability Index' : editingRecord ? 'Edit Source Reliability Index' : 'Add Source Reliability Index'}
+        title={editingRecord ? 'Edit Source Reliability Index' : 'Add Source Reliability Index'}
         submitLabel={editingRecord ? 'Save Changes' : 'Add Source Reliability Index'}
-        submitting={submitting || loadingView}
-        viewMode={isViewMode}
-        loading={loadingView}
+        submitting={submitting}
       />
 
       {/* Delete Modal */}
