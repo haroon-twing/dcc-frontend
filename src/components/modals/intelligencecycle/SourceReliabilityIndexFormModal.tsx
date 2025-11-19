@@ -81,7 +81,6 @@ const SourceReliabilityIndexFormModal: React.FC<SourceReliabilityIndexFormModalP
               onChange={(e) => handleChange('intl_recvd_month', e.target.value)}
               disabled={viewMode}
               required
-              placeholder="Select intelligence received date"
             />
           </div>
 
