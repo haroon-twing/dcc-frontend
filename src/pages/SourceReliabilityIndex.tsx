@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, Pencil, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/UI/Table';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/UI/card';
@@ -33,15 +34,13 @@ const SourceReliabilityIndex: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [showModal, setShowModal] = useState(false);
   const [editingRecord, setEditingRecord] = useState<SourceReliability | null>(null);
-  const [viewingRecord, setViewingRecord] = useState<SourceReliability | null>(null);
-  const [isViewMode, setIsViewMode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [recordToDeleteId, setRecordToDeleteId] = useState<string | number | undefined>(undefined);
   const [recordToDeleteName, setRecordToDeleteName] = useState<string>('');
   const [deleting, setDeleting] = useState<boolean>(false);
   const [formData, setFormData] = useState<SourceReliabilityIndexFormState>(buildInitialForm());
-  const [loadingView, setLoadingView] = useState<boolean>(false);
+  const navigate = useNavigate();
   
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortColumn, setSortColumn] = useState<string | null>(null);
@@ -56,9 +55,31 @@ const SourceReliabilityIndex: React.FC = () => {
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      const data: SourceReliability[] = [];
-      setRecords(data);
+      const endpoint = '/intl-cycle-src-reliability-info-credibility-indices/get-all-intl-cycle-src-reliability-info-credibility-indices';
+      const response = await publicApi.get(endpoint);
+
+      let data = response.data;
+      if (Array.isArray(data)) {
+        data = { data };
+      }
+
+      const recordsData = data?.data || data || [];
+      if (!Array.isArray(recordsData)) {
+        throw new Error('Unexpected response format while fetching source reliability records');
+      }
+
+      const mappedData: SourceReliability[] = recordsData.map((record: any, index: number) => ({
+        _id: record?._id || record?.id || record?.record_id || record?.source_id || `source-${index}`,
+        id: record?.id || record?._id || record?.record_id || record?.source_id || `source-${index}`,
+        source: record?.source || record?.source_name || 'N/A',
+        intl_recvd_month: record?.intl_recvd_month || record?.intelligence_received_month || record?.month || 'N/A',
+        source_reliability: record?.source_reliability || record?.reliability || 'N/A',
+        info_credibility: record?.info_credibility || record?.information_credibility || 'N/A',
+        remarks: record?.remarks || record?.notes || '',
+        ...record,
+      }));
+
+      setRecords(mappedData);
     } catch (err: any) {
       console.error('Error fetching source reliability records:', err);
       window.alert(
@@ -75,64 +96,16 @@ const SourceReliabilityIndex: React.FC = () => {
   const handleAdd = () => {
     setFormData(buildInitialForm());
     setEditingRecord(null);
-    setViewingRecord(null);
-    setIsViewMode(false);
     setShowModal(true);
   };
 
-  const handleView = async (record: SourceReliability) => {
+  const handleView = (record: SourceReliability) => {
     const recordId = record._id || record.id;
     if (!recordId) {
       window.alert('Record ID is required to view details');
       return;
     }
-
-    setLoadingView(true);
-    setShowModal(true);
-    setIsViewMode(true);
-    setViewingRecord(record);
-    setEditingRecord(null);
-
-    try {
-      // TODO: Replace with actual API endpoint when available
-      // const response = await publicApi.get(`/intelligence-cycle/source-reliability/get-single-source-reliability/${recordId}`);
-      // const data = response.data?.data || response.data;
-      
-      // For now, use the record data directly
-      const data = record;
-      
-      if (data) {
-        setFormData({
-          source: data.source || '',
-          intl_recvd_month: data.intl_recvd_month || '',
-          source_reliability: data.source_reliability || '',
-          info_credibility: data.info_credibility || '',
-          remarks: data.remarks || '',
-        });
-        setViewingRecord({
-          _id: data._id || data.id,
-          id: data.id || data._id,
-          source: data.source || '',
-          intl_recvd_month: data.intl_recvd_month || '',
-          source_reliability: data.source_reliability || '',
-          info_credibility: data.info_credibility || '',
-          remarks: data.remarks || '',
-        });
-      } else {
-        window.alert('No data received from server');
-        setShowModal(false);
-      }
-    } catch (err: any) {
-      console.error('Error fetching source reliability details:', err);
-      window.alert(
-        err?.response?.data?.message ||
-        err?.message ||
-        'Failed to load source reliability details. Please try again.'
-      );
-      setShowModal(false);
-    } finally {
-      setLoadingView(false);
-    }
+    navigate(`/intelligence-cycle/source-reliability/details?id=${recordId}`);
   };
 
   const handleEdit = (record: SourceReliability) => {
@@ -144,8 +117,6 @@ const SourceReliabilityIndex: React.FC = () => {
       remarks: record.remarks || '',
     });
     setEditingRecord(record);
-    setViewingRecord(null);
-    setIsViewMode(false);
     setShowModal(true);
   };
 
@@ -161,11 +132,12 @@ const SourceReliabilityIndex: React.FC = () => {
   const handleDeleteSubmit = async (id: string | number) => {
     setDeleting(true);
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await publicApi.delete(`/intelligence-cycle/source-reliability/delete-source-reliability/${id}`);
+      const deleteEndpoint = `/intl-cycle-src-reliability-info-credibility-indices/delete-intl-cycle-src-reliability-info-credibility-index/${id}`;
+      await api.delete(deleteEndpoint);
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
       setRecordToDeleteName('');
+      window.alert('Source reliability record deleted successfully!');
       await fetchRecords();
     } catch (error: any) {
       console.error('Error deleting record:', error);
@@ -180,26 +152,32 @@ const SourceReliabilityIndex: React.FC = () => {
     setSubmitting(true);
 
     try {
+      const payload = {
+        source: formData.source,
+        intl_recvd_month: formData.intl_recvd_month,
+        source_reliability: formData.source_reliability,
+        info_credibility: formData.info_credibility,
+        remarks: formData.remarks,
+      };
+
       if (editingRecord) {
         const recordId = editingRecord._id || editingRecord.id;
         if (!recordId) {
           window.alert('Record ID is required for update');
           return;
         }
-        // TODO: Replace with actual API endpoint when available
-        // await publicApi.put(`/intelligence-cycle/source-reliability/update-source-reliability/${recordId}`, formData);
-        window.alert('Update functionality will be available once API is integrated');
+        const updateEndpoint = `/intl-cycle-src-reliability-info-credibility-indices/update-intl-cycle-src-reliability-info-credibility-index/${recordId}`;
+        await api.put(updateEndpoint, payload);
+        window.alert('Source reliability record updated successfully!');
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // await publicApi.post('/intelligence-cycle/source-reliability/add-source-reliability', formData);
-        window.alert('Add functionality will be available once API is integrated');
+        const addEndpoint = '/intl-cycle-src-reliability-info-credibility-indices/add-intl-cycle-src-reliability-info-credibility-index';
+        await api.post(addEndpoint, payload);
+        window.alert('Source reliability record added successfully!');
       }
       
       setShowModal(false);
       setFormData(buildInitialForm());
       setEditingRecord(null);
-      setViewingRecord(null);
-      setIsViewMode(false);
       await fetchRecords();
     } catch (error: any) {
       console.error('Error saving source reliability:', error);
@@ -431,22 +409,18 @@ const SourceReliabilityIndex: React.FC = () => {
       <SourceReliabilityIndexFormModal
         open={showModal}
         onOpenChange={(open) => {
-          if (!open && !submitting && !loadingView) {
+          if (!open && !submitting) {
             setShowModal(false);
             setFormData(buildInitialForm());
             setEditingRecord(null);
-            setViewingRecord(null);
-            setIsViewMode(false);
           }
         }}
         formData={formData}
         setFormData={setFormData}
         onSubmit={handleSubmit}
-        title={isViewMode ? 'View Source Reliability Index' : editingRecord ? 'Edit Source Reliability Index' : 'Add Source Reliability Index'}
+        title={editingRecord ? 'Edit Source Reliability Index' : 'Add Source Reliability Index'}
         submitLabel={editingRecord ? 'Save Changes' : 'Add Source Reliability Index'}
-        submitting={submitting || loadingView}
-        viewMode={isViewMode}
-        loading={loadingView}
+        submitting={submitting}
       />
 
       {/* Delete Modal */}

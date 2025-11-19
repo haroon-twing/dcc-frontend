@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, Pencil, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/UI/Table';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/UI/card';
@@ -42,15 +43,13 @@ const IntelligenceCycleList: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [showModal, setShowModal] = useState(false);
   const [editingRecord, setEditingRecord] = useState<IntelligenceCycle | null>(null);
-  const [viewingRecord, setViewingRecord] = useState<IntelligenceCycle | null>(null);
-  const [isViewMode, setIsViewMode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [recordToDeleteId, setRecordToDeleteId] = useState<string | number | undefined>(undefined);
   const [recordToDeleteName, setRecordToDeleteName] = useState<string>('');
   const [deleting, setDeleting] = useState<boolean>(false);
   const [formData, setFormData] = useState<IntelligenceCycleFormState>(buildInitialForm());
-  const [loadingView, setLoadingView] = useState<boolean>(false);
+  const navigate = useNavigate();
   
   // Search, Sort, and Pagination states
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -66,15 +65,25 @@ const IntelligenceCycleList: React.FC = () => {
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      // const response = await publicApi.get('/intelligence-cycle/get-all-intelligence-cycles');
-      // const data = response.data?.data || response.data || [];
+      console.log('Fetching intelligence cycle records...');
       
-      // Placeholder: Empty array for now
-      const data: IntelligenceCycle[] = [];
+      // Make API call to fetch intelligence cycle data
+      const response = await publicApi.get('/intl-cycle/get-all');
+      console.log('API Response:', response);
+      
+      // Handle different response structures
+      let data = response.data;
+      if (Array.isArray(data)) {
+        // If response is an array, use it directly
+        data = { data };
+      }
+      
+      // Extract the array of records from the response
+      const recordsData = data.data || data || [];
+      console.log(`Fetched ${recordsData.length} records`);
       
       // Map the API response to our interface
-      const mappedData: IntelligenceCycle[] = data.map((item: any) => ({
+      const mappedData: IntelligenceCycle[] = recordsData.map((item: any) => ({
         _id: item._id || item.id,
         id: item.id || item._id,
         is_publication_province_intl_estimate: item.is_publication_province_intl_estimate || false,
@@ -101,60 +110,16 @@ const IntelligenceCycleList: React.FC = () => {
   const handleAdd = () => {
     setFormData(buildInitialForm());
     setEditingRecord(null);
-    setViewingRecord(null);
-    setIsViewMode(false);
     setShowModal(true);
   };
 
-  const handleView = async (record: IntelligenceCycle) => {
+  const handleView = (record: IntelligenceCycle) => {
     const recordId = record._id || record.id;
     if (!recordId) {
       window.alert('Record ID is required to view details');
       return;
     }
-
-    setLoadingView(true);
-    setShowModal(true);
-    setIsViewMode(true);
-    setViewingRecord(record);
-    setEditingRecord(null);
-
-    try {
-      // TODO: Replace with actual API endpoint when available
-      // const response = await publicApi.get(`/intelligence-cycle/get-single-intelligence-cycle/${recordId}`);
-      // const data = response.data?.data || response.data;
-      
-      // For now, use the record data directly
-      const data = record;
-      
-      if (data) {
-        setFormData({
-          is_publication_province_intl_estimate: data.is_publication_province_intl_estimate || false,
-          is_prep_action_plan: data.is_prep_action_plan || false,
-          is_prep_m_e_framework: data.is_prep_m_e_framework || false,
-          percent_completion_action_plan: data.percent_completion_action_plan || 0,
-          is_connectivity_concerned_dept: data.is_connectivity_concerned_dept || false,
-          is_prep_local_resp_mech: data.is_prep_local_resp_mech || false,
-          no_alerts_recvd: data.no_alerts_recvd || 0,
-          no_alerts_deduct_false: data.no_alerts_deduct_false || 0,
-          no_alerts_disposedof: data.no_alerts_disposedof || 0,
-          is_prep_eval_report_local_affect: data.is_prep_eval_report_local_affect || false,
-        });
-      } else {
-        window.alert('No data received from server');
-        setShowModal(false);
-      }
-    } catch (err: any) {
-      console.error('Error fetching intelligence cycle details:', err);
-      window.alert(
-        err?.response?.data?.message ||
-        err?.message ||
-        'Failed to load intelligence cycle details. Please try again.'
-      );
-      setShowModal(false);
-    } finally {
-      setLoadingView(false);
-    }
+    navigate(`/intelligence-cycle/details?id=${recordId}`);
   };
 
   const handleEdit = (record: IntelligenceCycle) => {
@@ -171,8 +136,6 @@ const IntelligenceCycleList: React.FC = () => {
       is_prep_eval_report_local_affect: record.is_prep_eval_report_local_affect || false,
     });
     setEditingRecord(record);
-    setViewingRecord(null);
-    setIsViewMode(false);
     setShowModal(true);
   };
 
@@ -188,14 +151,15 @@ const IntelligenceCycleList: React.FC = () => {
   const handleDeleteSubmit = async (id: string | number) => {
     setDeleting(true);
     try {
-      // TODO: Replace with actual API endpoint when available
-      // const deleteEndpoint = `/intelligence-cycle/delete-intelligence-cycle/${id}`;
-      // await api.delete(deleteEndpoint);
+      console.log('Deleting intelligence cycle with ID:', id);
+      await api.delete(`/intl-cycle/delete/${id}`);
       
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
       setRecordToDeleteName('');
       await fetchRecords();
+      
+      window.alert('Intelligence cycle deleted successfully!');
     } catch (error: any) {
       console.error('Error deleting intelligence cycle:', error);
       window.alert(
@@ -231,24 +195,27 @@ const IntelligenceCycleList: React.FC = () => {
         if (!recordId) {
           throw new Error('Record ID is required for update');
         }
-        // TODO: Replace with actual API endpoint when available
-        // const updateEndpoint = `/intelligence-cycle/update-intelligence-cycle/${recordId}`;
-        // await api.put(updateEndpoint, payload);
+        // Make API call to update existing intelligence cycle
+        console.log('Updating intelligence cycle with ID:', recordId, 'Data:', payload);
+        const response = await api.put(`/intl-cycle/update/${recordId}`, payload);
+        console.log('Update response:', response);
+        window.alert('Intelligence cycle updated successfully!');
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // const addEndpoint = '/intelligence-cycle/add-intelligence-cycle';
-        // await api.post(addEndpoint, payload);
+        // Make API call to add new intelligence cycle
+        console.log('Adding new intelligence cycle:', payload);
+        const response = await api.post('/intl-cycle/add', payload);
+        console.log('Add response:', response);
+        window.alert('Intelligence cycle added successfully!');
       }
 
       // Refetch data after add/edit
       await fetchRecords();
 
+      // Reset form and close modal
       setSubmitting(false);
       setShowModal(false);
       setFormData(buildInitialForm());
       setEditingRecord(null);
-      setViewingRecord(null);
-      setIsViewMode(false);
     } catch (err: any) {
       console.error('Error saving intelligence cycle:', err);
       window.alert(
@@ -596,22 +563,18 @@ const IntelligenceCycleList: React.FC = () => {
       <IntelligenceCycleFormModal
         open={showModal}
         onOpenChange={(open) => {
-          if (!open && !submitting && !loadingView) {
+          if (!open && !submitting) {
             setShowModal(false);
             setFormData(buildInitialForm());
             setEditingRecord(null);
-            setViewingRecord(null);
-            setIsViewMode(false);
           }
         }}
         formData={formData}
         setFormData={setFormData}
         onSubmit={handleSubmit}
-        title={isViewMode ? 'View Intelligence Cycle' : editingRecord ? 'Edit Intelligence Cycle' : 'Add Intelligence Cycle'}
+        title={editingRecord ? 'Edit Intelligence Cycle' : 'Add Intelligence Cycle'}
         submitLabel={editingRecord ? 'Save Changes' : 'Add Intelligence Cycle'}
-        submitting={submitting || loadingView}
-        viewMode={isViewMode}
-        loading={loadingView}
+        submitting={submitting}
       />
 
       {/* Delete Modal */}

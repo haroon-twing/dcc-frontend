@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, Pencil, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/UI/Table';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/UI/card';
@@ -33,15 +34,13 @@ const OfficesEstablishedPIFTAC: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [showModal, setShowModal] = useState(false);
   const [editingRecord, setEditingRecord] = useState<OfficeEstablished | null>(null);
-  const [viewingRecord, setViewingRecord] = useState<OfficeEstablished | null>(null);
-  const [isViewMode, setIsViewMode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [recordToDeleteId, setRecordToDeleteId] = useState<string | number | undefined>(undefined);
   const [recordToDeleteName, setRecordToDeleteName] = useState<string>('');
   const [deleting, setDeleting] = useState<boolean>(false);
   const [formData, setFormData] = useState<OfficeEstablishedFormState>(buildInitialForm());
-  const [loadingView, setLoadingView] = useState<boolean>(false);
+  const navigate = useNavigate();
   
   // Search, Sort, and Pagination states
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -57,9 +56,35 @@ const OfficesEstablishedPIFTAC: React.FC = () => {
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      const data: OfficeEstablished[] = [];
-      setRecords(data);
+      console.log('Fetching offices established records...');
+      
+      // Make API call to fetch offices established data
+      const response = await publicApi.get('/intl-cycle-offc-estd-piftac/get-all-intl-cycle-offc-estd-piftac');
+      console.log('API Response:', response);
+      
+      // Handle different response structures
+      let data = response.data;
+      if (Array.isArray(data)) {
+        // If response is an array, use it directly
+        data = { data };
+      }
+      
+      // Extract the array of records from the response
+      const recordsData = data.data || data || [];
+      console.log(`Fetched ${recordsData.length} records`);
+      
+      // Map the API response to our interface
+      const mappedData: OfficeEstablished[] = recordsData.map((item: any) => ({
+        _id: item._id || item.id,
+        id: item.id || item._id,
+        name: item.name || '',
+        rank: item.rank || '',
+        appointment: item.appointment || '',
+        contact_no: item.contact_no || '',
+        remarks: item.remarks || ''
+      }));
+      
+      setRecords(mappedData);
     } catch (err: any) {
       console.error('Error fetching offices established records:', err);
       window.alert(
@@ -76,64 +101,16 @@ const OfficesEstablishedPIFTAC: React.FC = () => {
   const handleAdd = () => {
     setFormData(buildInitialForm());
     setEditingRecord(null);
-    setViewingRecord(null);
-    setIsViewMode(false);
     setShowModal(true);
   };
 
-  const handleView = async (record: OfficeEstablished) => {
+  const handleView = (record: OfficeEstablished) => {
     const recordId = record._id || record.id;
     if (!recordId) {
       window.alert('Record ID is required to view details');
       return;
     }
-
-    setLoadingView(true);
-    setShowModal(true);
-    setIsViewMode(true);
-    setViewingRecord(record);
-    setEditingRecord(null);
-
-    try {
-      // TODO: Replace with actual API endpoint when available
-      // const response = await publicApi.get(`/intelligence-cycle/offices-established-piftac/get-single-office-established/${recordId}`);
-      // const data = response.data?.data || response.data;
-      
-      // For now, use the record data directly
-      const data = record;
-      
-      if (data) {
-        setFormData({
-          name: data.name || '',
-          rank: data.rank || '',
-          appointment: data.appointment || '',
-          contact_no: data.contact_no || '',
-          remarks: data.remarks || '',
-        });
-        setViewingRecord({
-          _id: data._id || data.id,
-          id: data.id || data._id,
-          name: data.name || '',
-          rank: data.rank || '',
-          appointment: data.appointment || '',
-          contact_no: data.contact_no || '',
-          remarks: data.remarks || '',
-        });
-      } else {
-        window.alert('No data received from server');
-        setShowModal(false);
-      }
-    } catch (err: any) {
-      console.error('Error fetching office established details:', err);
-      window.alert(
-        err?.response?.data?.message ||
-        err?.message ||
-        'Failed to load office details. Please try again.'
-      );
-      setShowModal(false);
-    } finally {
-      setLoadingView(false);
-    }
+    navigate(`/intelligence-cycle/offices-established-piftac/details?id=${recordId}`);
   };
 
   const handleEdit = (record: OfficeEstablished) => {
@@ -145,8 +122,6 @@ const OfficesEstablishedPIFTAC: React.FC = () => {
       remarks: record.remarks || '',
     });
     setEditingRecord(record);
-    setViewingRecord(null);
-    setIsViewMode(false);
     setShowModal(true);
   };
 
@@ -162,12 +137,14 @@ const OfficesEstablishedPIFTAC: React.FC = () => {
   const handleDeleteSubmit = async (id: string | number) => {
     setDeleting(true);
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await publicApi.delete(`/intelligence-cycle/offices-established-piftac/delete-office-established/${id}`);
+      console.log('Deleting office established record with ID:', id);
+      await api.delete(`/intl-cycle-offc-estd-piftac/delete-intl-cycle-offc-estd-piftac/${id}`);
+      console.log('Record deleted successfully');
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
       setRecordToDeleteName('');
       await fetchRecords();
+      window.alert('Office established record deleted successfully!');
     } catch (error: any) {
       console.error('Error deleting record:', error);
       window.alert(
@@ -191,20 +168,22 @@ const OfficesEstablishedPIFTAC: React.FC = () => {
           window.alert('Record ID is required for update');
           return;
         }
-        // TODO: Replace with actual API endpoint when available
-        // await publicApi.put(`/intelligence-cycle/offices-established-piftac/update-office-established/${recordId}`, formData);
-        window.alert('Update functionality will be available once API is integrated');
+        // Make API call to update existing office established record
+        console.log('Updating office established record with ID:', recordId, 'Data:', formData);
+        const response = await api.put(`/intl-cycle-offc-estd-piftac/update-intl-cycle-offc-estd-piftac/${recordId}`, formData);
+        console.log('Update response:', response);
+        window.alert('Office established record updated successfully!');
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // await publicApi.post('/intelligence-cycle/offices-established-piftac/add-office-established', formData);
-        window.alert('Add functionality will be available once API is integrated');
+        // Make API call to add new office established record
+        console.log('Adding new office established record:', formData);
+        const response = await api.post('/intl-cycle-offc-estd-piftac/add-intl-cycle-offc-estd-piftac', formData);
+        console.log('Add response:', response);
+        window.alert('Office established record added successfully!');
       }
       
       setShowModal(false);
       setFormData(buildInitialForm());
       setEditingRecord(null);
-      setViewingRecord(null);
-      setIsViewMode(false);
       await fetchRecords();
     } catch (error: any) {
       console.error('Error saving office established:', error);
@@ -457,22 +436,18 @@ const OfficesEstablishedPIFTAC: React.FC = () => {
       <OfficeEstablishedFormModal
         open={showModal}
         onOpenChange={(open) => {
-          if (!open && !submitting && !loadingView) {
+          if (!open && !submitting) {
             setShowModal(false);
             setFormData(buildInitialForm());
             setEditingRecord(null);
-            setViewingRecord(null);
-            setIsViewMode(false);
           }
         }}
         formData={formData}
         setFormData={setFormData}
         onSubmit={handleSubmit}
-        title={isViewMode ? 'View Office Established' : editingRecord ? 'Edit Office Established' : 'Add Office Established'}
+        title={editingRecord ? 'Edit Office Established' : 'Add Office Established'}
         submitLabel={editingRecord ? 'Save Changes' : 'Add Office Established'}
-        submitting={submitting || loadingView}
-        viewMode={isViewMode}
-        loading={loadingView}
+        submitting={submitting}
       />
 
       {/* Delete Modal */}

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, Pencil, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/UI/Table';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/UI/card';
@@ -29,15 +30,13 @@ const OperationalFacilitiesPIFTAC: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [showModal, setShowModal] = useState(false);
   const [editingRecord, setEditingRecord] = useState<OperationalFacility | null>(null);
-  const [viewingRecord, setViewingRecord] = useState<OperationalFacility | null>(null);
-  const [isViewMode, setIsViewMode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [recordToDeleteId, setRecordToDeleteId] = useState<string | number | undefined>(undefined);
   const [recordToDeleteName, setRecordToDeleteName] = useState<string>('');
   const [deleting, setDeleting] = useState<boolean>(false);
   const [formData, setFormData] = useState<OperationalFacilityFormState>(buildInitialForm());
-  const [loadingView, setLoadingView] = useState<boolean>(false);
+  const navigate = useNavigate();
   
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortColumn, setSortColumn] = useState<string | null>(null);
@@ -52,9 +51,24 @@ const OperationalFacilitiesPIFTAC: React.FC = () => {
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      const data: OperationalFacility[] = [];
-      setRecords(data);
+      const response = await publicApi.get('/intl-cycle-operational-facilities-piftac/get-all-intl-cycle-operational-facilities-piftac');
+
+      let data = response.data;
+      if (Array.isArray(data)) {
+        data = { data };
+      }
+
+      const recordsData = data?.data || data || [];
+
+      const mappedData: OperationalFacility[] = recordsData.map((item: any) => ({
+        _id: item._id || item.id,
+        id: item.id || item._id,
+        type_of_equip: item.type_of_equip || 'N/A',
+        qty_available: typeof item.qty_available === 'number' ? item.qty_available : Number(item.qty_available) || 0,
+        remarks: item.remarks || '',
+      }));
+
+      setRecords(mappedData);
     } catch (err: any) {
       console.error('Error fetching operational facilities records:', err);
       window.alert(
@@ -71,60 +85,16 @@ const OperationalFacilitiesPIFTAC: React.FC = () => {
   const handleAdd = () => {
     setFormData(buildInitialForm());
     setEditingRecord(null);
-    setViewingRecord(null);
-    setIsViewMode(false);
     setShowModal(true);
   };
 
-  const handleView = async (record: OperationalFacility) => {
+  const handleView = (record: OperationalFacility) => {
     const recordId = record._id || record.id;
     if (!recordId) {
       window.alert('Record ID is required to view details');
       return;
     }
-
-    setLoadingView(true);
-    setShowModal(true);
-    setIsViewMode(true);
-    setViewingRecord(record);
-    setEditingRecord(null);
-
-    try {
-      // TODO: Replace with actual API endpoint when available
-      // const response = await publicApi.get(`/intelligence-cycle/operational-facilities-piftac/get-single-operational-facility/${recordId}`);
-      // const data = response.data?.data || response.data;
-      
-      // For now, use the record data directly
-      const data = record;
-      
-      if (data) {
-        setFormData({
-          type_of_equip: data.type_of_equip || '',
-          qty_available: data.qty_available || 0,
-          remarks: data.remarks || '',
-        });
-        setViewingRecord({
-          _id: data._id || data.id,
-          id: data.id || data._id,
-          type_of_equip: data.type_of_equip || '',
-          qty_available: data.qty_available || 0,
-          remarks: data.remarks || '',
-        });
-      } else {
-        window.alert('No data received from server');
-        setShowModal(false);
-      }
-    } catch (err: any) {
-      console.error('Error fetching operational facility details:', err);
-      window.alert(
-        err?.response?.data?.message ||
-        err?.message ||
-        'Failed to load operational facility details. Please try again.'
-      );
-      setShowModal(false);
-    } finally {
-      setLoadingView(false);
-    }
+    navigate(`/intelligence-cycle/operational-facilities-piftac/details?id=${recordId}`);
   };
 
   const handleEdit = (record: OperationalFacility) => {
@@ -134,8 +104,6 @@ const OperationalFacilitiesPIFTAC: React.FC = () => {
       remarks: record.remarks || '',
     });
     setEditingRecord(record);
-    setViewingRecord(null);
-    setIsViewMode(false);
     setShowModal(true);
   };
 
@@ -151,12 +119,13 @@ const OperationalFacilitiesPIFTAC: React.FC = () => {
   const handleDeleteSubmit = async (id: string | number) => {
     setDeleting(true);
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await publicApi.delete(`/intelligence-cycle/operational-facilities-piftac/delete-operational-facility/${id}`);
+      const deleteEndpoint = `/intl-cycle-operational-facilities-piftac/delete-intl-cycle-operational-facilities-piftac/${id}`;
+      await api.delete(deleteEndpoint);
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
       setRecordToDeleteName('');
       await fetchRecords();
+      window.alert('Operational facility deleted successfully!');
     } catch (error: any) {
       console.error('Error deleting record:', error);
       window.alert(error?.response?.data?.message || error?.message || 'Failed to delete record. Please try again.');
@@ -170,26 +139,30 @@ const OperationalFacilitiesPIFTAC: React.FC = () => {
     setSubmitting(true);
 
     try {
+      const payload = {
+        type_of_equip: formData.type_of_equip,
+        qty_available: formData.qty_available,
+        remarks: formData.remarks,
+      };
+
       if (editingRecord) {
         const recordId = editingRecord._id || editingRecord.id;
         if (!recordId) {
           window.alert('Record ID is required for update');
           return;
         }
-        // TODO: Replace with actual API endpoint when available
-        // await publicApi.put(`/intelligence-cycle/operational-facilities-piftac/update-operational-facility/${recordId}`, formData);
-        window.alert('Update functionality will be available once API is integrated');
+        const updateEndpoint = `/intl-cycle-operational-facilities-piftac/update-intl-cycle-operational-facilities-piftac/${recordId}`;
+        await api.put(updateEndpoint, payload);
+        window.alert('Operational facility updated successfully!');
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // await publicApi.post('/intelligence-cycle/operational-facilities-piftac/add-operational-facility', formData);
-        window.alert('Add functionality will be available once API is integrated');
+        const addEndpoint = '/intl-cycle-operational-facilities-piftac/add-intl-cycle-operational-facilities-piftac';
+        await api.post(addEndpoint, payload);
+        window.alert('Operational facility added successfully!');
       }
       
       setShowModal(false);
       setFormData(buildInitialForm());
       setEditingRecord(null);
-      setViewingRecord(null);
-      setIsViewMode(false);
       await fetchRecords();
     } catch (error: any) {
       console.error('Error saving operational facility:', error);
@@ -401,22 +374,18 @@ const OperationalFacilitiesPIFTAC: React.FC = () => {
       <OperationalFacilityFormModal
         open={showModal}
         onOpenChange={(open) => {
-          if (!open && !submitting && !loadingView) {
+          if (!open && !submitting) {
             setShowModal(false);
             setFormData(buildInitialForm());
             setEditingRecord(null);
-            setViewingRecord(null);
-            setIsViewMode(false);
           }
         }}
         formData={formData}
         setFormData={setFormData}
         onSubmit={handleSubmit}
-        title={isViewMode ? 'View Operational Facility' : editingRecord ? 'Edit Operational Facility' : 'Add Operational Facility'}
+        title={editingRecord ? 'Edit Operational Facility' : 'Add Operational Facility'}
         submitLabel={editingRecord ? 'Save Changes' : 'Add Operational Facility'}
-        submitting={submitting || loadingView}
-        viewMode={isViewMode}
-        loading={loadingView}
+        submitting={submitting}
       />
 
       {/* Delete Modal */}

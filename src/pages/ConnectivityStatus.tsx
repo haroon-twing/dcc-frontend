@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, Pencil, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/UI/Table';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/UI/card';
@@ -35,15 +36,13 @@ const ConnectivityStatus: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [showModal, setShowModal] = useState(false);
   const [editingRecord, setEditingRecord] = useState<ConnectivityStatus | null>(null);
-  const [viewingRecord, setViewingRecord] = useState<ConnectivityStatus | null>(null);
-  const [isViewMode, setIsViewMode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [recordToDeleteId, setRecordToDeleteId] = useState<string | number | undefined>(undefined);
   const [recordToDeleteName, setRecordToDeleteName] = useState<string>('');
   const [deleting, setDeleting] = useState<boolean>(false);
   const [formData, setFormData] = useState<ConnectivityStatusFormState>(buildInitialForm());
-  const [loadingView, setLoadingView] = useState<boolean>(false);
+  const navigate = useNavigate();
   
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortColumn, setSortColumn] = useState<string | null>(null);
@@ -58,9 +57,27 @@ const ConnectivityStatus: React.FC = () => {
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      const data: ConnectivityStatus[] = [];
-      setRecords(data);
+      const response = await publicApi.get('/intl-cycle-connectivity-status/get-all-intl-cycle-connectivity-status');
+
+      let data = response.data;
+      if (Array.isArray(data)) {
+        data = { data };
+      }
+
+      const recordsData = data?.data || data || [];
+
+      const mappedData: ConnectivityStatus[] = recordsData.map((item: any) => ({
+        _id: item._id || item.id,
+        id: item.id || item._id,
+        office: item.office || 'N/A',
+        is_nip_access: Boolean(item.is_nip_access),
+        is_eoffice_access: Boolean(item.is_eoffice_access),
+        is_oas_access: Boolean(item.is_oas_access),
+        is_internet_access: Boolean(item.is_internet_access),
+        remarks: item.remarks || '',
+      }));
+
+      setRecords(mappedData);
     } catch (err: any) {
       console.error('Error fetching connectivity status records:', err);
       window.alert(
@@ -77,66 +94,16 @@ const ConnectivityStatus: React.FC = () => {
   const handleAdd = () => {
     setFormData(buildInitialForm());
     setEditingRecord(null);
-    setViewingRecord(null);
-    setIsViewMode(false);
     setShowModal(true);
   };
 
-  const handleView = async (record: ConnectivityStatus) => {
+  const handleView = (record: ConnectivityStatus) => {
     const recordId = record._id || record.id;
     if (!recordId) {
       window.alert('Record ID is required to view details');
       return;
     }
-
-    setLoadingView(true);
-    setShowModal(true);
-    setIsViewMode(true);
-    setViewingRecord(record);
-    setEditingRecord(null);
-
-    try {
-      // TODO: Replace with actual API endpoint when available
-      // const response = await publicApi.get(`/intelligence-cycle/connectivity-status/get-single-connectivity-status/${recordId}`);
-      // const data = response.data?.data || response.data;
-      
-      // For now, use the record data directly
-      const data = record;
-      
-      if (data) {
-        setFormData({
-          office: data.office || '',
-          is_nip_access: data.is_nip_access || false,
-          is_eoffice_access: data.is_eoffice_access || false,
-          is_oas_access: data.is_oas_access || false,
-          is_internet_access: data.is_internet_access || false,
-          remarks: data.remarks || '',
-        });
-        setViewingRecord({
-          _id: data._id || data.id,
-          id: data.id || data._id,
-          office: data.office || '',
-          is_nip_access: data.is_nip_access || false,
-          is_eoffice_access: data.is_eoffice_access || false,
-          is_oas_access: data.is_oas_access || false,
-          is_internet_access: data.is_internet_access || false,
-          remarks: data.remarks || '',
-        });
-      } else {
-        window.alert('No data received from server');
-        setShowModal(false);
-      }
-    } catch (err: any) {
-      console.error('Error fetching connectivity status details:', err);
-      window.alert(
-        err?.response?.data?.message ||
-        err?.message ||
-        'Failed to load connectivity status details. Please try again.'
-      );
-      setShowModal(false);
-    } finally {
-      setLoadingView(false);
-    }
+    navigate(`/intelligence-cycle/connectivity-status/details?id=${recordId}`);
   };
 
   const handleEdit = (record: ConnectivityStatus) => {
@@ -149,8 +116,6 @@ const ConnectivityStatus: React.FC = () => {
       remarks: record.remarks || '',
     });
     setEditingRecord(record);
-    setViewingRecord(null);
-    setIsViewMode(false);
     setShowModal(true);
   };
 
@@ -166,12 +131,13 @@ const ConnectivityStatus: React.FC = () => {
   const handleDeleteSubmit = async (id: string | number) => {
     setDeleting(true);
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await publicApi.delete(`/intelligence-cycle/connectivity-status/delete-connectivity-status/${id}`);
+      const deleteEndpoint = `/intl-cycle-connectivity-status/delete-intl-cycle-connectivity-status/${id}`;
+      await api.delete(deleteEndpoint);
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
       setRecordToDeleteName('');
       await fetchRecords();
+      window.alert('Connectivity status deleted successfully!');
     } catch (error: any) {
       console.error('Error deleting record:', error);
       window.alert(error?.response?.data?.message || error?.message || 'Failed to delete record. Please try again.');
@@ -185,26 +151,33 @@ const ConnectivityStatus: React.FC = () => {
     setSubmitting(true);
 
     try {
+      const payload = {
+        office: formData.office,
+        is_nip_access: formData.is_nip_access,
+        is_eoffice_access: formData.is_eoffice_access,
+        is_oas_access: formData.is_oas_access,
+        is_internet_access: formData.is_internet_access,
+        remarks: formData.remarks,
+      };
+
       if (editingRecord) {
         const recordId = editingRecord._id || editingRecord.id;
         if (!recordId) {
           window.alert('Record ID is required for update');
           return;
         }
-        // TODO: Replace with actual API endpoint when available
-        // await publicApi.put(`/intelligence-cycle/connectivity-status/update-connectivity-status/${recordId}`, formData);
-        window.alert('Update functionality will be available once API is integrated');
+        const updateEndpoint = `/intl-cycle-connectivity-status/update-intl-cycle-connectivity-status/${recordId}`;
+        await api.put(updateEndpoint, payload);
+        window.alert('Connectivity status updated successfully!');
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // await publicApi.post('/intelligence-cycle/connectivity-status/add-connectivity-status', formData);
-        window.alert('Add functionality will be available once API is integrated');
+        const addEndpoint = '/intl-cycle-connectivity-status/add-intl-cycle-connectivity-status';
+        await api.post(addEndpoint, payload);
+        window.alert('Connectivity status added successfully!');
       }
       
       setShowModal(false);
       setFormData(buildInitialForm());
       setEditingRecord(null);
-      setViewingRecord(null);
-      setIsViewMode(false);
       await fetchRecords();
     } catch (error: any) {
       console.error('Error saving connectivity status:', error);
@@ -486,22 +459,18 @@ const ConnectivityStatus: React.FC = () => {
       <ConnectivityStatusFormModal
         open={showModal}
         onOpenChange={(open) => {
-          if (!open && !submitting && !loadingView) {
+          if (!open && !submitting) {
             setShowModal(false);
             setFormData(buildInitialForm());
             setEditingRecord(null);
-            setViewingRecord(null);
-            setIsViewMode(false);
           }
         }}
         formData={formData}
         setFormData={setFormData}
         onSubmit={handleSubmit}
-        title={isViewMode ? 'View Connectivity Status' : editingRecord ? 'Edit Connectivity Status' : 'Add Connectivity Status'}
+        title={editingRecord ? 'Edit Connectivity Status' : 'Add Connectivity Status'}
         submitLabel={editingRecord ? 'Save Changes' : 'Add Connectivity Status'}
-        submitting={submitting || loadingView}
-        viewMode={isViewMode}
-        loading={loadingView}
+        submitting={submitting}
       />
 
       {/* Delete Modal */}
