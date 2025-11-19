@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, Pencil, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/UI/Table';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/UI/card';
@@ -12,7 +13,6 @@ import api from '../lib/api';
 interface AllocationID {
   _id?: string;
   id?: string;
-  office: string;
   name: string;
   appointment: string;
   application: string;
@@ -22,7 +22,6 @@ interface AllocationID {
 }
 
 const buildInitialForm = (): AllocationIDFormState => ({
-  office: '',
   name: '',
   appointment: '',
   application: '',
@@ -31,6 +30,7 @@ const buildInitialForm = (): AllocationIDFormState => ({
 });
 
 const AllocationIDsPIFTAC: React.FC = () => {
+  const navigate = useNavigate();
   const [records, setRecords] = useState<AllocationID[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [showModal, setShowModal] = useState(false);
@@ -58,9 +58,19 @@ const AllocationIDsPIFTAC: React.FC = () => {
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      const data: AllocationID[] = [];
-      setRecords(data);
+      const response = await publicApi.get('/intl-cycle-allocation-id/get-all-intl-cycle-allocation-id');
+      const data: any[] = response.data.data;
+      const mappedData: AllocationID[] = data.map((item: any) => ({
+        _id: item._id || item.id,
+        id: item.id || item._id,
+        name: item.name || '',
+        appointment: item.appointment || '',
+        application: item.application || '',
+        portal_id: item.portal_id || '',
+        remarks: item.remarks || '',
+      }));
+
+      setRecords(mappedData);
     } catch (err: any) {
       console.error('Error fetching allocation IDs records:', err);
       window.alert(
@@ -89,51 +99,13 @@ const AllocationIDsPIFTAC: React.FC = () => {
       return;
     }
 
-    setLoadingView(true);
-    setShowModal(true);
-    setIsViewMode(true);
-    setViewingRecord(record);
-    setEditingRecord(null);
-
     try {
-      // TODO: Replace with actual API endpoint when available
-      // const response = await publicApi.get(`/intelligence-cycle/allocation-ids-piftac/get-single-allocation-id/${recordId}`);
-      // const data = response.data?.data || response.data;
-      
-      // For now, use the record data directly
-      const data = record;
-      
-      if (data) {
-        setFormData({
-          office: data.office || '',
-          name: data.name || '',
-          appointment: data.appointment || '',
-          application: data.application || '',
-          portal_id: data.portal_id || '',
-          remarks: data.remarks || '',
-        });
-        setViewingRecord({
-          _id: data._id || data.id,
-          id: data.id || data._id,
-          office: data.office || '',
-          name: data.name || '',
-          appointment: data.appointment || '',
-          application: data.application || '',
-          portal_id: data.portal_id || '',
-          remarks: data.remarks || '',
-        });
-      } else {
-        window.alert('No data received from server');
-        setShowModal(false);
-      }
+      setLoadingView(true);
+      await publicApi.get(`/intl-cycle-allocation-id/get-single-intl-cycle-allocation-id/${recordId}`);
+      navigate(`/intelligence-cycle/allocation-ids-piftac/details?id=${recordId}`);
     } catch (err: any) {
       console.error('Error fetching allocation ID details:', err);
-      window.alert(
-        err?.response?.data?.message ||
-        err?.message ||
-        'Failed to load allocation ID details. Please try again.'
-      );
-      setShowModal(false);
+      window.alert(err?.response?.data?.message || err?.message || 'Failed to load allocation ID details.');
     } finally {
       setLoadingView(false);
     }
@@ -141,7 +113,6 @@ const AllocationIDsPIFTAC: React.FC = () => {
 
   const handleEdit = (record: AllocationID) => {
     setFormData({
-      office: record.office || '',
       name: record.name || '',
       appointment: record.appointment || '',
       application: record.application || '',
@@ -166,8 +137,7 @@ const AllocationIDsPIFTAC: React.FC = () => {
   const handleDeleteSubmit = async (id: string | number) => {
     setDeleting(true);
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await publicApi.delete(`/intelligence-cycle/allocation-ids-piftac/delete-allocation-id/${id}`);
+      await api.delete(`/intl-cycle-allocation-id/delete-intl-cycle-allocation-id/${id}`);
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
       setRecordToDeleteName('');
@@ -185,19 +155,16 @@ const AllocationIDsPIFTAC: React.FC = () => {
     setSubmitting(true);
 
     try {
+      const payload = { ...formData };
       if (editingRecord) {
         const recordId = editingRecord._id || editingRecord.id;
         if (!recordId) {
           window.alert('Record ID is required for update');
           return;
         }
-        // TODO: Replace with actual API endpoint when available
-        // await publicApi.put(`/intelligence-cycle/allocation-ids-piftac/update-allocation-id/${recordId}`, formData);
-        window.alert('Update functionality will be available once API is integrated');
+        await api.put(`/intl-cycle-allocation-id/update-intl-cycle-allocation-id/${recordId}`, payload);
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // await publicApi.post('/intelligence-cycle/allocation-ids-piftac/add-allocation-id', formData);
-        window.alert('Add functionality will be available once API is integrated');
+        await api.post('/intl-cycle-allocation-id/add-intl-cycle-allocation-id', payload);
       }
       
       setShowModal(false);
@@ -247,7 +214,13 @@ const AllocationIDsPIFTAC: React.FC = () => {
     let filtered = records;
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
-      filtered = records.filter((record) => Object.values(record).some((value) => String(value || '').toLowerCase().includes(searchLower)));
+      filtered = records.filter((record) => (
+        record.name?.toLowerCase().includes(searchLower) ||
+        record.appointment?.toLowerCase().includes(searchLower) ||
+        record.application?.toLowerCase().includes(searchLower) ||
+        record.portal_id?.toLowerCase().includes(searchLower) ||
+        record.remarks?.toLowerCase().includes(searchLower)
+      ));
     }
     if (sortColumn && sortDirection) {
       filtered = [...filtered].sort((a, b) => {
@@ -286,7 +259,7 @@ const AllocationIDsPIFTAC: React.FC = () => {
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-2xl font-bold">Allocation of IDs at PIFTAC</CardTitle>
+                <CardTitle className="text-3xl font-bold text-foreground">Allocation of IDs at PIFTAC</CardTitle>
                 <p className="text-muted-foreground mt-1">Manage allocation of IDs records</p>
               </div>
               <Button className="flex items-center gap-2" onClick={handleAdd}>
@@ -307,51 +280,35 @@ const AllocationIDsPIFTAC: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                 
                   <TableHead 
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('name')}
                   >
-                    <div className="flex items-center">
-                      Name
-                      {getSortIcon('name')}
-                    </div>
+                    Name {getSortIcon('name')}
                   </TableHead>
                   <TableHead 
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('appointment')}
                   >
-                    <div className="flex items-center">
-                      Appointment
-                      {getSortIcon('appointment')}
-                    </div>
+                    Appointment {getSortIcon('appointment')}
                   </TableHead>
                   <TableHead 
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('application')}
                   >
-                    <div className="flex items-center">
-                      Application
-                      {getSortIcon('application')}
-                    </div>
+                    Application {getSortIcon('application')}
                   </TableHead>
                   <TableHead 
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('portal_id')}
                   >
-                    <div className="flex items-center">
-                      Portal ID
-                      {getSortIcon('portal_id')}
-                    </div>
+                    Portal ID {getSortIcon('portal_id')}
                   </TableHead>
                   <TableHead 
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('remarks')}
                   >
-                    <div className="flex items-center">
-                      Remarks
-                      {getSortIcon('remarks')}
-                    </div>
+                    Remarks {getSortIcon('remarks')}
                   </TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -359,21 +316,18 @@ const AllocationIDsPIFTAC: React.FC = () => {
               <TableBody>
                 {paginatedRecords.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      {searchTerm ? 'No records found matching your search.' : 'No records found.'}
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      {searchTerm ? 'No allocation ID records found matching your search.' : 'No allocation ID records found.'}
                     </TableCell>
                   </TableRow>
                 ) : (
                   paginatedRecords.map((record) => (
                     <TableRow key={record._id || record.id}>
-                      <TableCell>{record.office || 'N/A'}</TableCell>
-                      <TableCell>{record.name || 'N/A'}</TableCell>
-                      <TableCell>{record.appointment || 'N/A'}</TableCell>
-                      <TableCell>{record.application || 'N/A'}</TableCell>
-                      <TableCell>{record.portal_id || 'N/A'}</TableCell>
-                      <TableCell className="max-w-xs truncate" title={record.remarks || ''}>
-                        {record.remarks || 'N/A'}
-                      </TableCell>
+                      <TableCell className="font-medium">{record.name || '-'}</TableCell>
+                      <TableCell>{record.appointment || '-'}</TableCell>
+                      <TableCell>{record.application || '-'}</TableCell>
+                      <TableCell>{record.portal_id || '-'}</TableCell>
+                      <TableCell className="max-w-xs truncate">{record.remarks || '-'}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button 

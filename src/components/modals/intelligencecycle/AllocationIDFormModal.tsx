@@ -4,7 +4,6 @@ import { Button } from '../../UI/Button';
 import Input from '../../UI/Input';
 
 export interface AllocationIDFormState {
-  office: string;
   name: string;
   appointment: string;
   application: string;

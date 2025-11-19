@@ -37,12 +37,16 @@ const RecoveryPage = React.lazy(() => import('./pages/Recovery'));
 const ReportsPage = React.lazy(() => import('./pages/Reports'));
 const IntelligenceCycleDashboardPage = React.lazy(() => import('./pages/IntelligenceCycleDashboard'));
 const IntelligenceCycleListPage = React.lazy(() => import('./pages/IntelligenceCycleList'));
+const IntelligenceCycleListDetailsPage = React.lazy(() => import('./pages/IntelligenceCycleListDetails'));
 const OfficesEstablishedPIFTACPage = React.lazy(() => import('./pages/OfficesEstablishedPIFTAC'));
 const OperationalFacilitiesPIFTACPage = React.lazy(() => import('./pages/OperationalFacilitiesPIFTAC'));
 const ConnectivityStatusPage = React.lazy(() => import('./pages/ConnectivityStatus'));
 const AllocationIDsPIFTACPage = React.lazy(() => import('./pages/AllocationIDsPIFTAC'));
+const AllocationIDsPIFTACDetailsPage = React.lazy(() => import('./pages/AllocationIDsPIFTACDetails'));
 const PIFTACReportsIntelligencePage = React.lazy(() => import('./pages/PIFTACReportsIntelligence'));
+const PIFTACReportsIntelligenceDetailsPage = React.lazy(() => import('./pages/PIFTACReportsIntelligenceDetails'));
 const PredictiveAnalysisDetailPage = React.lazy(() => import('./pages/PredictiveAnalysisDetail'));
+const PredictiveAnalysisDetailsPage = React.lazy(() => import('./pages/PredictiveAnalysisDetails'));
 const SourceReliabilityIndexPage = React.lazy(() => import('./pages/SourceReliabilityIndex'));
 
 function App() {
@@ -222,6 +226,13 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
+          <Route path="/intelligence-cycle/list/details" element={
+            <ProtectedRoute>
+              <Layout>
+                <IntelligenceCycleListDetailsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
           <Route path="/intelligence-cycle/offices-established-piftac" element={
             <ProtectedRoute>
               <Layout>
@@ -250,6 +261,13 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
+          <Route path="/intelligence-cycle/allocation-ids-piftac/details" element={
+            <ProtectedRoute>
+              <Layout>
+                <AllocationIDsPIFTACDetailsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
           <Route path="/intelligence-cycle/piftac-reports" element={
             <ProtectedRoute>
               <Layout>
@@ -257,10 +275,24 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
+          <Route path="/intelligence-cycle/piftac-reports/details" element={
+            <ProtectedRoute>
+              <Layout>
+                <PIFTACReportsIntelligenceDetailsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
           <Route path="/intelligence-cycle/predictive-analysis" element={
             <ProtectedRoute>
               <Layout>
                 <PredictiveAnalysisDetailPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/intelligence-cycle/predictive-analysis/details" element={
+            <ProtectedRoute>
+              <Layout>
+                <PredictiveAnalysisDetailsPage />
               </Layout>
             </ProtectedRoute>
           } />

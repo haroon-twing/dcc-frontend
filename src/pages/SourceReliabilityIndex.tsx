@@ -56,8 +56,8 @@ const SourceReliabilityIndex: React.FC = () => {
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      const data: SourceReliability[] = [];
+      const response = await publicApi.get('/intl-cycle-src-reliability-info-credibility-indices/get-all-intl-cycle-src-reliability-info-credibility-indices');
+      const data = response.data?.data || response.data || [];
       setRecords(data);
     } catch (err: any) {
       console.error('Error fetching source reliability records:', err);
@@ -66,7 +66,6 @@ const SourceReliabilityIndex: React.FC = () => {
         err?.message ||
         'Failed to load source reliability records. Please try again.'
       );
-      setRecords([]);
     } finally {
       setLoading(false);
     }
@@ -94,12 +93,8 @@ const SourceReliabilityIndex: React.FC = () => {
     setEditingRecord(null);
 
     try {
-      // TODO: Replace with actual API endpoint when available
-      // const response = await publicApi.get(`/intelligence-cycle/source-reliability/get-single-source-reliability/${recordId}`);
-      // const data = response.data?.data || response.data;
-      
-      // For now, use the record data directly
-      const data = record;
+      const response = await publicApi.get(`/intl-cycle-src-reliability-info-credibility-indices/get-single-intl-cycle-src-reliability-info-credibility-index/${recordId}`);
+      const data = response.data?.data || response.data;
       
       if (data) {
         setFormData({
@@ -161,8 +156,7 @@ const SourceReliabilityIndex: React.FC = () => {
   const handleDeleteSubmit = async (id: string | number) => {
     setDeleting(true);
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await publicApi.delete(`/intelligence-cycle/source-reliability/delete-source-reliability/${id}`);
+      await publicApi.delete(`/intl-cycle-src-reliability-info-credibility-indices/delete-intl-cycle-src-reliability-info-credibility-index/${id}`);
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
       setRecordToDeleteName('');
@@ -186,13 +180,9 @@ const SourceReliabilityIndex: React.FC = () => {
           window.alert('Record ID is required for update');
           return;
         }
-        // TODO: Replace with actual API endpoint when available
-        // await publicApi.put(`/intelligence-cycle/source-reliability/update-source-reliability/${recordId}`, formData);
-        window.alert('Update functionality will be available once API is integrated');
+        await publicApi.put(`/intl-cycle-src-reliability-info-credibility-indices/update-intl-cycle-src-reliability-info-credibility-index/${recordId}`, formData);
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // await publicApi.post('/intelligence-cycle/source-reliability/add-source-reliability', formData);
-        window.alert('Add functionality will be available once API is integrated');
+        await publicApi.post('/intl-cycle-src-reliability-info-credibility-indices/add-intl-cycle-src-reliability-info-credibility-index', formData);
       }
       
       setShowModal(false);
