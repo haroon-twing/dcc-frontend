@@ -39,6 +39,7 @@ const buildInitialForm = (): IntelligenceCycleFormState => ({
 });
 
 const IntelligenceCycleList: React.FC = () => {
+  const navigate = useNavigate();
   const [records, setRecords] = useState<IntelligenceCycle[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [showModal, setShowModal] = useState(false);
@@ -67,6 +68,7 @@ const IntelligenceCycleList: React.FC = () => {
       setLoading(true);
       console.log('Fetching intelligence cycle records...');
       
+<<<<<<< HEAD
       // Make API call to fetch intelligence cycle data
       const response = await publicApi.get('/intl-cycle/get-all');
       console.log('API Response:', response);
@@ -81,6 +83,12 @@ const IntelligenceCycleList: React.FC = () => {
       // Extract the array of records from the response
       const recordsData = data.data || data || [];
       console.log(`Fetched ${recordsData.length} records`);
+=======
+      // Fetch records from backend
+      const response = await publicApi.get('/intl-cycle/get-all');
+      const raw = (response?.data?.data ?? response?.data ?? []) as any;
+      const data: any[] = Array.isArray(raw) ? raw : (raw?.items ?? []);
+>>>>>>> 1725b3ea1c38c445fd436fcf15a8e8d3987e4d59
       
       // Map the API response to our interface
       const mappedData: IntelligenceCycle[] = recordsData.map((item: any) => ({
@@ -119,7 +127,22 @@ const IntelligenceCycleList: React.FC = () => {
       window.alert('Record ID is required to view details');
       return;
     }
+<<<<<<< HEAD
     navigate(`/intelligence-cycle/details?id=${recordId}`);
+=======
+
+    try {
+      setLoadingView(true);
+      // Optional: pre-fetch to ensure record exists
+      await publicApi.get(`/intl-cycle/get-single/${recordId}`);
+      navigate(`/intelligence-cycle/list/details?id=${recordId}`);
+    } catch (err: any) {
+      console.error('Error fetching intelligence cycle details:', err);
+      window.alert(err?.response?.data?.message || err?.message || 'Failed to load intelligence cycle details.');
+    } finally {
+      setLoadingView(false);
+    }
+>>>>>>> 1725b3ea1c38c445fd436fcf15a8e8d3987e4d59
   };
 
   const handleEdit = (record: IntelligenceCycle) => {
@@ -143,7 +166,9 @@ const IntelligenceCycleList: React.FC = () => {
     const recordId = record._id || record.id;
     if (recordId) {
       setRecordToDeleteId(recordId);
-      setRecordToDeleteName(`Intelligence Cycle ID: ${recordId}`);
+      // Prefer a human-friendly name if present; otherwise fall back to ID
+      const displayName = (record as any).name || (record as any).title || (record as any).category || `ID: ${recordId}`;
+      setRecordToDeleteName(String(displayName));
       setShowDeleteModal(true);
     }
   };
@@ -151,7 +176,13 @@ const IntelligenceCycleList: React.FC = () => {
   const handleDeleteSubmit = async (id: string | number) => {
     setDeleting(true);
     try {
+<<<<<<< HEAD
       console.log('Deleting intelligence cycle with ID:', id);
+=======
+      // TODO: Replace with actual API endpoint when available
+      // const deleteEndpoint = `/intelligence-cycle/delete-intelligence-cycle/${id}`;
+      // await api.delete(deleteEndpoint);
+>>>>>>> 1725b3ea1c38c445fd436fcf15a8e8d3987e4d59
       await api.delete(`/intl-cycle/delete/${id}`);
       
       setShowDeleteModal(false);
@@ -195,6 +226,7 @@ const IntelligenceCycleList: React.FC = () => {
         if (!recordId) {
           throw new Error('Record ID is required for update');
         }
+<<<<<<< HEAD
         // Make API call to update existing intelligence cycle
         console.log('Updating intelligence cycle with ID:', recordId, 'Data:', payload);
         const response = await api.put(`/intl-cycle/update/${recordId}`, payload);
@@ -206,6 +238,17 @@ const IntelligenceCycleList: React.FC = () => {
         const response = await api.post('/intl-cycle/add', payload);
         console.log('Add response:', response);
         window.alert('Intelligence cycle added successfully!');
+=======
+        // TODO: Replace with actual API endpoint when available
+        // const updateEndpoint = `/intelligence-cycle/update-intelligence-cycle/${recordId}`;
+        // await api.put(updateEndpoint, payload);
+        await api.put(`/intl-cycle/update/${recordId}`, payload);
+      } else {
+        // TODO: Replace with actual API endpoint when available
+        // const addEndpoint = '/intelligence-cycle/add-intelligence-cycle';
+        // await api.post(addEndpoint, payload);
+        await api.post('/intl-cycle/add', payload);
+>>>>>>> 1725b3ea1c38c445fd436fcf15a8e8d3987e4d59
       }
 
       // Refetch data after add/edit
@@ -582,7 +625,7 @@ const IntelligenceCycleList: React.FC = () => {
         open={showDeleteModal}
         onOpenChange={setShowDeleteModal}
         id={recordToDeleteId}
-        message={`Are you sure you want to delete "${recordToDeleteName}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete this record? This action cannot be undone.`}
         onSubmit={handleDeleteSubmit}
         deleting={deleting}
         title="Delete Intelligence Cycle"

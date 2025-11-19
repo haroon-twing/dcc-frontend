@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, Pencil, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/UI/Table';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/UI/card';
@@ -31,6 +32,7 @@ const buildInitialForm = (): PIFTACReportIntelligenceFormState => ({
 });
 
 const PIFTACReportsIntelligence: React.FC = () => {
+  const navigate = useNavigate();
   const [records, setRecords] = useState<PIFTACReport[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [showModal, setShowModal] = useState(false);
@@ -59,8 +61,22 @@ const PIFTACReportsIntelligence: React.FC = () => {
     try {
       setLoading(true);
       // TODO: Replace with actual API endpoint when available
-      const data: PIFTACReport[] = [];
-      setRecords(data);
+      const response = await publicApi.get('/intl-cycle-piftac-reports/get-all-intl-cycle-piftac-reports');
+      const raw = (response?.data?.data ?? response?.data ?? []) as any;
+      const data: any[] = Array.isArray(raw) ? raw : (raw?.items ?? []);
+
+      const mapped: PIFTACReport[] = data.map((item: any) => ({
+        _id: item._id || item.id,
+        id: item.id || item._id,
+        name: item.name || '',
+        type: item.type || '',
+        category: item.category || '',
+        forwarded_to: item.forwarded_to || '',
+        reference_no: item.reference_no || '',
+        remarks: item.remarks || '',
+      }));
+
+      setRecords(mapped);
     } catch (err: any) {
       console.error('Error fetching PIFTAC reports records:', err);
       window.alert(
@@ -89,51 +105,14 @@ const PIFTACReportsIntelligence: React.FC = () => {
       return;
     }
 
-    setLoadingView(true);
-    setShowModal(true);
-    setIsViewMode(true);
-    setViewingRecord(record);
-    setEditingRecord(null);
-
     try {
-      // TODO: Replace with actual API endpoint when available
-      // const response = await publicApi.get(`/intelligence-cycle/piftac-reports/get-single-piftac-report/${recordId}`);
-      // const data = response.data?.data || response.data;
-      
-      // For now, use the record data directly
-      const data = record;
-      
-      if (data) {
-        setFormData({
-          name: data.name || '',
-          type: data.type || '',
-          category: data.category || '',
-          forwarded_to: data.forwarded_to || '',
-          reference_no: data.reference_no || '',
-          remarks: data.remarks || '',
-        });
-        setViewingRecord({
-          _id: data._id || data.id,
-          id: data.id || data._id,
-          name: data.name || '',
-          type: data.type || '',
-          category: data.category || '',
-          forwarded_to: data.forwarded_to || '',
-          reference_no: data.reference_no || '',
-          remarks: data.remarks || '',
-        });
-      } else {
-        window.alert('No data received from server');
-        setShowModal(false);
-      }
+      setLoadingView(true);
+      // Optional: pre-fetch to ensure record exists
+      await publicApi.get(`/intl-cycle-piftac-reports/get-single-intl-cycle-piftac-report/${recordId}`);
+      navigate(`/intelligence-cycle/piftac-reports/details?id=${recordId}`);
     } catch (err: any) {
       console.error('Error fetching PIFTAC report details:', err);
-      window.alert(
-        err?.response?.data?.message ||
-        err?.message ||
-        'Failed to load PIFTAC report details. Please try again.'
-      );
-      setShowModal(false);
+      window.alert(err?.response?.data?.message || err?.message || 'Failed to load PIFTAC report details.');
     } finally {
       setLoadingView(false);
     }
@@ -168,6 +147,7 @@ const PIFTACReportsIntelligence: React.FC = () => {
     try {
       // TODO: Replace with actual API endpoint when available
       // await publicApi.delete(`/intelligence-cycle/piftac-reports/delete-piftac-report/${id}`);
+      await api.delete(`/intl-cycle-piftac-reports/delete-intl-cycle-piftac-report/${id}`);
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
       setRecordToDeleteName('');
@@ -193,11 +173,11 @@ const PIFTACReportsIntelligence: React.FC = () => {
         }
         // TODO: Replace with actual API endpoint when available
         // await publicApi.put(`/intelligence-cycle/piftac-reports/update-piftac-report/${recordId}`, formData);
-        window.alert('Update functionality will be available once API is integrated');
+        await api.put(`/intl-cycle-piftac-reports/update-intl-cycle-piftac-report/${recordId}`, formData);
       } else {
         // TODO: Replace with actual API endpoint when available
         // await publicApi.post('/intelligence-cycle/piftac-reports/add-piftac-report', formData);
-        window.alert('Add functionality will be available once API is integrated');
+        await api.post('/intl-cycle-piftac-reports/add-intl-cycle-piftac-report', formData);
       }
       
       setShowModal(false);

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, Pencil, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/UI/Table';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/UI/card';
@@ -46,6 +47,7 @@ const PredictiveAnalysisDetail: React.FC = () => {
   const [deleting, setDeleting] = useState<boolean>(false);
   const [formData, setFormData] = useState<PredictiveAnalysisDetailFormState>(buildInitialForm());
   const [loadingView, setLoadingView] = useState<boolean>(false);
+  const navigate = useNavigate();
   
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortColumn, setSortColumn] = useState<string | null>(null);
@@ -61,8 +63,23 @@ const PredictiveAnalysisDetail: React.FC = () => {
     try {
       setLoading(true);
       // TODO: Replace with actual API endpoint when available
-      const data: PredictiveAnalysis[] = [];
-      setRecords(data);
+      const response = await publicApi.get('/intl-cycle-predictive-analysis-details/get-all-intl-cycle-predictive-analysis-details');
+      const raw = (response?.data?.data ?? response?.data ?? []) as any;
+      const data: any[] = Array.isArray(raw) ? raw : (raw?.items ?? []);
+
+      const mapped: PredictiveAnalysis[] = data.map((item: any) => ({
+        _id: item._id || item.id,
+        id: item.id || item._id,
+        name: item.name || '',
+        forwarded_to: item.forwarded_to || '',
+        assess_accuracy: item.assess_accuracy || '',
+        timely_response: item.timely_response || '',
+        is_incident_averted: Boolean(item.is_incident_averted),
+        is_generated: Boolean(item.is_generated),
+        remarks: item.remarks || '',
+      }));
+
+      setRecords(mapped);
     } catch (err: any) {
       console.error('Error fetching predictive analysis records:', err);
       window.alert(
@@ -90,57 +107,7 @@ const PredictiveAnalysisDetail: React.FC = () => {
       window.alert('Record ID is required to view details');
       return;
     }
-
-    setLoadingView(true);
-    setShowModal(true);
-    setIsViewMode(true);
-    setViewingRecord(record);
-    setEditingRecord(null);
-
-    try {
-      // TODO: Replace with actual API endpoint when available
-      // const response = await publicApi.get(`/intelligence-cycle/predictive-analysis/get-single-predictive-analysis/${recordId}`);
-      // const data = response.data?.data || response.data;
-      
-      // For now, use the record data directly
-      const data = record;
-      
-      if (data) {
-        setFormData({
-          name: data.name || '',
-          forwarded_to: data.forwarded_to || '',
-          assess_accuracy: data.assess_accuracy || '',
-          timely_response: data.timely_response || '',
-          is_incident_averted: data.is_incident_averted || false,
-          is_generated: data.is_generated || false,
-          remarks: data.remarks || '',
-        });
-        setViewingRecord({
-          _id: data._id || data.id,
-          id: data.id || data._id,
-          name: data.name || '',
-          forwarded_to: data.forwarded_to || '',
-          assess_accuracy: data.assess_accuracy || '',
-          timely_response: data.timely_response || '',
-          is_incident_averted: data.is_incident_averted || false,
-          is_generated: data.is_generated || false,
-          remarks: data.remarks || '',
-        });
-      } else {
-        window.alert('No data received from server');
-        setShowModal(false);
-      }
-    } catch (err: any) {
-      console.error('Error fetching predictive analysis details:', err);
-      window.alert(
-        err?.response?.data?.message ||
-        err?.message ||
-        'Failed to load predictive analysis details. Please try again.'
-      );
-      setShowModal(false);
-    } finally {
-      setLoadingView(false);
-    }
+    navigate(`/intelligence-cycle/predictive-analysis/details?id=${recordId}`);
   };
 
   const handleEdit = (record: PredictiveAnalysis) => {
@@ -173,6 +140,7 @@ const PredictiveAnalysisDetail: React.FC = () => {
     try {
       // TODO: Replace with actual API endpoint when available
       // await publicApi.delete(`/intelligence-cycle/predictive-analysis/delete-predictive-analysis/${id}`);
+      await api.delete(`/intl-cycle-predictive-analysis-details/delete-intl-cycle-predictive-analysis-detail/${id}`);
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
       setRecordToDeleteName('');
@@ -198,11 +166,11 @@ const PredictiveAnalysisDetail: React.FC = () => {
         }
         // TODO: Replace with actual API endpoint when available
         // await publicApi.put(`/intelligence-cycle/predictive-analysis/update-predictive-analysis/${recordId}`, formData);
-        window.alert('Update functionality will be available once API is integrated');
+        await api.put(`/intl-cycle-predictive-analysis-details/update-intl-cycle-predictive-analysis-detail/${recordId}`, formData);
       } else {
         // TODO: Replace with actual API endpoint when available
         // await publicApi.post('/intelligence-cycle/predictive-analysis/add-predictive-analysis', formData);
-        window.alert('Add functionality will be available once API is integrated');
+        await api.post('/intl-cycle-predictive-analysis-details/add-intl-cycle-predictive-analysis-detail', formData);
       }
       
       setShowModal(false);
@@ -291,7 +259,7 @@ const PredictiveAnalysisDetail: React.FC = () => {
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-2xl font-bold">Predictive Analysis Detail</CardTitle>
+                <CardTitle className="text-3xl font-bold text-foreground">Predictive Analysis Detail</CardTitle>
                 <p className="text-muted-foreground mt-1">Manage predictive analysis records</p>
               </div>
               <Button className="flex items-center gap-2" onClick={handleAdd}>

@@ -55,31 +55,9 @@ const SourceReliabilityIndex: React.FC = () => {
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      const endpoint = '/intl-cycle-src-reliability-info-credibility-indices/get-all-intl-cycle-src-reliability-info-credibility-indices';
-      const response = await publicApi.get(endpoint);
-
-      let data = response.data;
-      if (Array.isArray(data)) {
-        data = { data };
-      }
-
-      const recordsData = data?.data || data || [];
-      if (!Array.isArray(recordsData)) {
-        throw new Error('Unexpected response format while fetching source reliability records');
-      }
-
-      const mappedData: SourceReliability[] = recordsData.map((record: any, index: number) => ({
-        _id: record?._id || record?.id || record?.record_id || record?.source_id || `source-${index}`,
-        id: record?.id || record?._id || record?.record_id || record?.source_id || `source-${index}`,
-        source: record?.source || record?.source_name || 'N/A',
-        intl_recvd_month: record?.intl_recvd_month || record?.intelligence_received_month || record?.month || 'N/A',
-        source_reliability: record?.source_reliability || record?.reliability || 'N/A',
-        info_credibility: record?.info_credibility || record?.information_credibility || 'N/A',
-        remarks: record?.remarks || record?.notes || '',
-        ...record,
-      }));
-
-      setRecords(mappedData);
+      const response = await publicApi.get('/intl-cycle-src-reliability-info-credibility-indices/get-all-intl-cycle-src-reliability-info-credibility-indices');
+      const data = response.data?.data || response.data || [];
+      setRecords(data);
     } catch (err: any) {
       console.error('Error fetching source reliability records:', err);
       window.alert(
@@ -87,7 +65,6 @@ const SourceReliabilityIndex: React.FC = () => {
         err?.message ||
         'Failed to load source reliability records. Please try again.'
       );
-      setRecords([]);
     } finally {
       setLoading(false);
     }
@@ -105,7 +82,49 @@ const SourceReliabilityIndex: React.FC = () => {
       window.alert('Record ID is required to view details');
       return;
     }
-    navigate(`/intelligence-cycle/source-reliability/details?id=${recordId}`);
+
+    setLoadingView(true);
+    setShowModal(true);
+    setIsViewMode(true);
+    setViewingRecord(record);
+    setEditingRecord(null);
+
+    try {
+      const response = await publicApi.get(`/intl-cycle-src-reliability-info-credibility-indices/get-single-intl-cycle-src-reliability-info-credibility-index/${recordId}`);
+      const data = response.data?.data || response.data;
+      
+      if (data) {
+        setFormData({
+          source: data.source || '',
+          intl_recvd_month: data.intl_recvd_month || '',
+          source_reliability: data.source_reliability || '',
+          info_credibility: data.info_credibility || '',
+          remarks: data.remarks || '',
+        });
+        setViewingRecord({
+          _id: data._id || data.id,
+          id: data.id || data._id,
+          source: data.source || '',
+          intl_recvd_month: data.intl_recvd_month || '',
+          source_reliability: data.source_reliability || '',
+          info_credibility: data.info_credibility || '',
+          remarks: data.remarks || '',
+        });
+      } else {
+        window.alert('No data received from server');
+        setShowModal(false);
+      }
+    } catch (err: any) {
+      console.error('Error fetching source reliability details:', err);
+      window.alert(
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to load source reliability details. Please try again.'
+      );
+      setShowModal(false);
+    } finally {
+      setLoadingView(false);
+    }
   };
 
   const handleEdit = (record: SourceReliability) => {
@@ -132,8 +151,12 @@ const SourceReliabilityIndex: React.FC = () => {
   const handleDeleteSubmit = async (id: string | number) => {
     setDeleting(true);
     try {
+<<<<<<< HEAD
       const deleteEndpoint = `/intl-cycle-src-reliability-info-credibility-indices/delete-intl-cycle-src-reliability-info-credibility-index/${id}`;
       await api.delete(deleteEndpoint);
+=======
+      await publicApi.delete(`/intl-cycle-src-reliability-info-credibility-indices/delete-intl-cycle-src-reliability-info-credibility-index/${id}`);
+>>>>>>> 1725b3ea1c38c445fd436fcf15a8e8d3987e4d59
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
       setRecordToDeleteName('');
@@ -166,6 +189,7 @@ const SourceReliabilityIndex: React.FC = () => {
           window.alert('Record ID is required for update');
           return;
         }
+<<<<<<< HEAD
         const updateEndpoint = `/intl-cycle-src-reliability-info-credibility-indices/update-intl-cycle-src-reliability-info-credibility-index/${recordId}`;
         await api.put(updateEndpoint, payload);
         window.alert('Source reliability record updated successfully!');
@@ -173,6 +197,11 @@ const SourceReliabilityIndex: React.FC = () => {
         const addEndpoint = '/intl-cycle-src-reliability-info-credibility-indices/add-intl-cycle-src-reliability-info-credibility-index';
         await api.post(addEndpoint, payload);
         window.alert('Source reliability record added successfully!');
+=======
+        await publicApi.put(`/intl-cycle-src-reliability-info-credibility-indices/update-intl-cycle-src-reliability-info-credibility-index/${recordId}`, formData);
+      } else {
+        await publicApi.post('/intl-cycle-src-reliability-info-credibility-indices/add-intl-cycle-src-reliability-info-credibility-index', formData);
+>>>>>>> 1725b3ea1c38c445fd436fcf15a8e8d3987e4d59
       }
       
       setShowModal(false);
