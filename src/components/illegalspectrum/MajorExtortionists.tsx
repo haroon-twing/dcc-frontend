@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../UI/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../UI/Table';
 import { Button } from '../UI/Button';
-import { Eye, Edit, Trash2, Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, Pencil, Trash2, Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { publicApi } from '../../lib/api';
 import api from '../../lib/api';
 import MajorExtortionistFormModal from '../modals/illegalspectrum/MajorExtortionistFormModal';
@@ -77,15 +78,8 @@ const MajorExtortionists: React.FC<MajorExtortionistsProps> = ({ extortionId }) 
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      // const endpoint = extortionId 
-      //   ? `/extortion/get-all-major-extortionists/${extortionId}`
-      //   : '/extortion/get-all-major-extortionists';
-      // const response = await publicApi.get(endpoint);
-      // const data = response.data?.data || response.data || [];
-      
-      // For now, using empty array
-      const data: any[] = [];
+      const response = await publicApi.get('/ispec-extortion-major-ext-in-region/get-all-ispec-extortion-major-ext-in-region');
+      const data = response.data?.data || [];
       
       const records: MajorExtortionist[] = data.map((item: any) => ({
         _id: item._id || item.id,
@@ -122,28 +116,13 @@ const MajorExtortionists: React.FC<MajorExtortionistsProps> = ({ extortionId }) 
     setShowModal(true);
   };
 
-  const handleView = async (record: MajorExtortionist) => {
-    const recordId = record._id || record.id;
-    if (!recordId) {
-      return;
-    }
+  const navigate = useNavigate();
 
-    setViewingRecord(record);
-    setEditingRecord(null);
-    setIsViewMode(true);
-    setFormData({
-      id: recordId,
-      name: record.name,
-      present_Residence: record.present_Residence,
-      domicile: record.domicile,
-      mob_no: record.mob_no,
-      is_any_fam_mem_terr: record.is_any_fam_mem_terr,
-      affilication_with_terr_grp: record.affilication_with_terr_grp,
-      model_ext: record.model_ext,
-      maj_tgt: record.maj_tgt,
-      remarks: record.remarks,
-    });
-    setShowModal(true);
+  const handleView = (record: MajorExtortionist) => {
+    const recordId = record._id || record.id;
+    if (recordId) {
+      navigate(`/illegal-spectrum/extortion/major-extortionists/details?id=${recordId}`);
+    }
   };
 
   const handleEdit = (record: MajorExtortionist) => {
@@ -191,29 +170,20 @@ const MajorExtortionists: React.FC<MajorExtortionistsProps> = ({ extortionId }) 
         ...(extortionId && { extortion_id: extortionId }),
       };
 
-      if (editingRecord) {
-        // TODO: Replace with actual API endpoint when available
-        // await api.put(`/extortion/update-major-extortionist/${formData.id}`, payload);
-        console.log('Update major extortionist:', formData.id, payload);
+      if (editingRecord && formData.id) {
+        await api.put(`/ispec-extortion-major-ext-in-region/update-ispec-extortion-major-ext-in-region/${formData.id}`, payload);
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // await api.post('/extortion/add-major-extortionist', payload);
-        console.log('Add major extortionist:', payload);
+        await api.post('/ispec-extortion-major-ext-in-region/add-ispec-extortion-major-ext-in-region', payload);
       }
 
-      await fetchRecords();
       setShowModal(false);
+      fetchRecords();
       setFormData(buildInitialForm());
       setEditingRecord(null);
       setViewingRecord(null);
-      setIsViewMode(false);
-    } catch (error: any) {
-      console.error('Error submitting major extortionist:', error);
-      alert(
-        error?.response?.data?.message ||
-        error?.message ||
-        `Failed to ${editingRecord ? 'update' : 'add'} major extortionist. Please try again.`
-      );
+    } catch (error) {
+      console.error('Error saving major extortionist:', error);
+      // You might want to show an error message to the user here
     } finally {
       setSubmitting(false);
     }
@@ -223,10 +193,8 @@ const MajorExtortionists: React.FC<MajorExtortionistsProps> = ({ extortionId }) 
     setDeleting(true);
 
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/extortion/delete-major-extortionist/${id}`);
-      console.log('Delete major extortionist:', id);
-
+      await api.delete(`/ispec-extortion-major-ext-in-region/delete-ispec-extortion-major-ext-in-region/${id}`);
+      
       await fetchRecords();
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
@@ -417,27 +385,32 @@ const MajorExtortionists: React.FC<MajorExtortionistsProps> = ({ extortionId }) 
                     <TableCell>{record.mob_no}</TableCell>
                     <TableCell>{record.affilication_with_terr_grp || '-'}</TableCell>
                     <TableCell>{record.maj_tgt || '-'}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleView(record)}
-                          className="text-muted-foreground hover:text-foreground"
+                          className="h-8 w-8 p-0"
+                          title="View"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="secondary"
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(record)}
+                          className="h-8 w-8 p-0"
+                          title="Edit"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="destructive"
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(record)}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                          title="Delete"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

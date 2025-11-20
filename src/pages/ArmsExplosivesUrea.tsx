@@ -69,22 +69,7 @@ const ArmsExplosivesUrea: React.FC = () => {
   const itemsPerPage = 10;
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        // TODO: Replace with actual API endpoint when available
-        // const response = await publicApi.get('/get-all-arms-explosives-urea');
-        // For now, using empty array
-        setRecords([]);
-      } catch (error) {
-        console.error('Error fetching arms explosives urea records:', error);
-        setRecords([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    fetchRecords();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,36 +78,32 @@ const ArmsExplosivesUrea: React.FC = () => {
 
     try {
       const payload = {
-        per_change_arms_inflow: formData.per_change_arms_inflow,
-        per_change_explosive_inflow: formData.per_change_explosive_inflow,
-        per_change_illegal_urea_transportation: formData.per_change_illegal_urea_transportation,
-        no_int_reports_shared_lea: formData.no_int_reports_shared_lea,
-        no_letter_recvd_in_fdbk: formData.no_letter_recvd_in_fdbk,
-        per_recs_made_illegal_arms: formData.per_recs_made_illegal_arms,
-        is_recs_faster_than_mthly_inflow_ill_arms: formData.is_recs_faster_than_mthly_inflow_ill_arms,
-        per_recs_made_illegal_explosives: formData.per_recs_made_illegal_explosives,
-        is_recs_faster_than_mthly_inflow_ill_exp: formData.is_recs_faster_than_mthly_inflow_ill_exp,
-        per_recs_made_illegal_urea: formData.per_recs_made_illegal_urea,
-        is_recs_faster_than_mthly_inflow_ill_urea: formData.is_recs_faster_than_mthly_inflow_ill_urea,
-        no_perpetrator_convicted: formData.no_perpetrator_convicted,
-        no_appreh_perp_set_freebycourt: formData.no_appreh_perp_set_freebycourt,
-        no_perpetrator_case_remain_pending: formData.no_perpetrator_case_remain_pending,
+        per_change_arms_inflow: Number(formData.per_change_arms_inflow),
+        per_change_explosive_inflow: Number(formData.per_change_explosive_inflow),
+        per_change_illegal_urea_transportation: Number(formData.per_change_illegal_urea_transportation),
+        no_int_reports_shared_lea: Number(formData.no_int_reports_shared_lea),
+        no_letter_recvd_in_fdbk: Number(formData.no_letter_recvd_in_fdbk),
+        per_recs_made_illegal_arms: Number(formData.per_recs_made_illegal_arms),
+        is_recs_faster_than_mthly_inflow_ill_arms: Boolean(formData.is_recs_faster_than_mthly_inflow_ill_arms),
+        per_recs_made_illegal_explosives: Number(formData.per_recs_made_illegal_explosives),
+        is_recs_faster_than_mthly_inflow_ill_exp: Boolean(formData.is_recs_faster_than_mthly_inflow_ill_exp),
+        per_recs_made_illegal_urea: Number(formData.per_recs_made_illegal_urea),
+        is_recs_faster_than_mthly_inflow_ill_urea: Boolean(formData.is_recs_faster_than_mthly_inflow_ill_urea),
+        no_perpetrator_convicted: Number(formData.no_perpetrator_convicted),
+        no_appreh_perp_set_freebycourt: Number(formData.no_appreh_perp_set_freebycourt),
+        no_perpetrator_case_remain_pending: Number(formData.no_perpetrator_case_remain_pending),
       };
 
-      let response;
       if (editingId) {
-        // TODO: Replace with actual API endpoint when available
-        // response = await api.put(`/update-arms-explosives-urea/${editingId}`, payload);
-        console.log('Update arms explosives urea:', editingId, payload);
+        // Update existing record
+        await api.put(`/ispec-arms-explosives/update-ispec-arms-explosives/${editingId}`, payload);
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // response = await api.post('/add-arms-explosives-urea', payload);
-        console.log('Add arms explosives urea:', payload);
+        // Create new record
+        await api.post('/ispec-arms-explosives/add-ispec-arms-explosives', payload);
       }
 
-      // TODO: Refresh the list after successful submission
-      // const recordsResponse = await publicApi.get('/get-all-arms-explosives-urea');
-      // Process and set records
+      // Refresh the list after successful submission
+      await fetchRecords();
 
       // Close modal and reset form
       setShowAddModal(false);
@@ -148,62 +129,56 @@ const ArmsExplosivesUrea: React.FC = () => {
   };
 
   const openEditModal = (record: ArmsExplosivesUreaRecord) => {
-    setEditingId(record.id);
-    setViewingId(null);
-    setFormData({
-      id: record.id,
-      per_change_arms_inflow: record.per_change_arms_inflow,
-      per_change_explosive_inflow: record.per_change_explosive_inflow,
-      per_change_illegal_urea_transportation: record.per_change_illegal_urea_transportation,
-      no_int_reports_shared_lea: record.no_int_reports_shared_lea,
-      no_letter_recvd_in_fdbk: record.no_letter_recvd_in_fdbk,
-      per_recs_made_illegal_arms: record.per_recs_made_illegal_arms,
-      is_recs_faster_than_mthly_inflow_ill_arms: record.is_recs_faster_than_mthly_inflow_ill_arms,
-      per_recs_made_illegal_explosives: record.per_recs_made_illegal_explosives,
-      is_recs_faster_than_mthly_inflow_ill_exp: record.is_recs_faster_than_mthly_inflow_ill_exp,
-      per_recs_made_illegal_urea: record.per_recs_made_illegal_urea,
-      is_recs_faster_than_mthly_inflow_ill_urea: record.is_recs_faster_than_mthly_inflow_ill_urea,
-      no_perpetrator_convicted: record.no_perpetrator_convicted,
-      no_appreh_perp_set_freebycourt: record.no_appreh_perp_set_freebycourt,
-      no_perpetrator_case_remain_pending: record.no_perpetrator_case_remain_pending,
-    });
-    setShowAddModal(true);
+    navigate(`/illegal-spectrum/arms-explosives-urea/edit/${record.id}`);
   };
 
   const openViewModal = (record: ArmsExplosivesUreaRecord) => {
-    setViewingId(record.id);
-    setEditingId(null);
-    setFormData({
-      id: record.id,
-      per_change_arms_inflow: record.per_change_arms_inflow,
-      per_change_explosive_inflow: record.per_change_explosive_inflow,
-      per_change_illegal_urea_transportation: record.per_change_illegal_urea_transportation,
-      no_int_reports_shared_lea: record.no_int_reports_shared_lea,
-      no_letter_recvd_in_fdbk: record.no_letter_recvd_in_fdbk,
-      per_recs_made_illegal_arms: record.per_recs_made_illegal_arms,
-      is_recs_faster_than_mthly_inflow_ill_arms: record.is_recs_faster_than_mthly_inflow_ill_arms,
-      per_recs_made_illegal_explosives: record.per_recs_made_illegal_explosives,
-      is_recs_faster_than_mthly_inflow_ill_exp: record.is_recs_faster_than_mthly_inflow_ill_exp,
-      per_recs_made_illegal_urea: record.per_recs_made_illegal_urea,
-      is_recs_faster_than_mthly_inflow_ill_urea: record.is_recs_faster_than_mthly_inflow_ill_urea,
-      no_perpetrator_convicted: record.no_perpetrator_convicted,
-      no_appreh_perp_set_freebycourt: record.no_appreh_perp_set_freebycourt,
-      no_perpetrator_case_remain_pending: record.no_perpetrator_case_remain_pending,
-    });
-    setShowAddModal(true);
+    navigate(`/illegal-spectrum/arms-explosives-urea/view/${record.id}`);
+  };
+
+  const fetchRecords = async () => {
+    try {
+      setLoading(true);
+      const response = await publicApi.get('/ispec-arms-explosives/get-all-ispec-arms-explosives');
+      const data = response.data?.data || response.data || [];
+      
+      const formattedRecords: ArmsExplosivesUreaRecord[] = Array.isArray(data) 
+        ? data.map((item: any) => ({
+            id: item._id || item.id || '',
+            per_change_arms_inflow: item.per_change_arms_inflow || 0,
+            per_change_explosive_inflow: item.per_change_explosive_inflow || 0,
+            per_change_illegal_urea_transportation: item.per_change_illegal_urea_transportation || 0,
+            no_int_reports_shared_lea: item.no_int_reports_shared_lea || 0,
+            no_letter_recvd_in_fdbk: item.no_letter_recvd_in_fdbk || 0,
+            per_recs_made_illegal_arms: item.per_recs_made_illegal_arms || 0,
+            is_recs_faster_than_mthly_inflow_ill_arms: item.is_recs_faster_than_mthly_inflow_ill_arms || false,
+            per_recs_made_illegal_explosives: item.per_recs_made_illegal_explosives || 0,
+            is_recs_faster_than_mthly_inflow_ill_exp: item.is_recs_faster_than_mthly_inflow_ill_exp || false,
+            per_recs_made_illegal_urea: item.per_recs_made_illegal_urea || 0,
+            is_recs_faster_than_mthly_inflow_ill_urea: item.is_recs_faster_than_mthly_inflow_ill_urea || false,
+            no_perpetrator_convicted: item.no_perpetrator_convicted || 0,
+            no_appreh_perp_set_freebycourt: item.no_appreh_perp_set_freebycourt || 0,
+            no_perpetrator_case_remain_pending: item.no_perpetrator_case_remain_pending || 0,
+          }))
+        : [];
+      
+      setRecords(formattedRecords);
+    } catch (error) {
+      console.error('Error fetching arms explosives urea records:', error);
+      setRecords([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDeleteSubmit = async (id: string | number) => {
     setDeleting(true);
 
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/delete-arms-explosives-urea/${id}`);
-      console.log('Delete arms explosives urea:', id);
-
-      // TODO: Refresh the list after successful deletion
-      // const recordsResponse = await publicApi.get('/get-all-arms-explosives-urea');
-      // Process and set records
+      await api.delete(`/ispec-arms-explosives/delete-ispec-arms-explosives/${id}`);
+      
+      // Refresh the list after successful deletion
+      await fetchRecords();
 
       // Close modal
       setDeleteTargetId(null);
@@ -299,8 +274,14 @@ const ArmsExplosivesUrea: React.FC = () => {
     return <ArrowDown className="h-4 w-4 ml-1 text-primary" />;
   };
 
-  const getDisplayValue = (value: boolean): string => {
+    const getDisplayValue = (value: boolean): string => {
     return value ? 'Yes' : 'No';
+  };
+
+  const getValueColor = (value: number): string => {
+    if (value > 0) return 'text-red-600 dark:text-red-400 font-medium';
+    if (value < 0) return 'text-green-600 dark:text-green-400 font-medium';
+    return 'text-foreground';
   };
 
   return (
@@ -382,8 +363,26 @@ const ArmsExplosivesUrea: React.FC = () => {
                       onClick={() => handleSort('is_recs_faster_than_mthly_inflow_ill_arms')}
                       className="flex items-center hover:text-foreground transition-colors whitespace-nowrap"
                     >
-                      Recs Faster (Arms)
+                      Recs Status
                       {getSortIcon('is_recs_faster_than_mthly_inflow_ill_arms')}
+                    </button>
+                  </TableHead>
+                  <TableHead className="whitespace-nowrap">
+                    <button
+                      onClick={() => handleSort('no_int_reports_shared_lea')}
+                      className="flex items-center hover:text-foreground transition-colors whitespace-nowrap"
+                    >
+                      Reports Shared
+                      {getSortIcon('no_int_reports_shared_lea')}
+                    </button>
+                  </TableHead>
+                  <TableHead className="whitespace-nowrap">
+                    <button
+                      onClick={() => handleSort('no_letter_recvd_in_fdbk')}
+                      className="flex items-center hover:text-foreground transition-colors whitespace-nowrap"
+                    >
+                      Feedback Received
+                      {getSortIcon('no_letter_recvd_in_fdbk')}
                     </button>
                   </TableHead>
                   <TableHead className="text-right sticky right-0 bg-background">Actions</TableHead>
@@ -392,7 +391,7 @@ const ArmsExplosivesUrea: React.FC = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="py-6 text-center text-muted-foreground">
                       Loading arms explosives urea records...
                     </TableCell>
                   </TableRow>
@@ -404,44 +403,85 @@ const ArmsExplosivesUrea: React.FC = () => {
                   </TableRow>
                 ) : (
                   paginatedRecords.map((record) => (
-                    <TableRow key={record.id}>
-                      <TableCell className="whitespace-nowrap">{record.per_change_arms_inflow.toFixed(1)}%</TableCell>
-                      <TableCell className="whitespace-nowrap">{record.per_change_explosive_inflow.toFixed(1)}%</TableCell>
-                      <TableCell className="whitespace-nowrap">{record.per_change_illegal_urea_transportation.toFixed(1)}%</TableCell>
-                      <TableCell className="whitespace-nowrap">{record.no_perpetrator_convicted}</TableCell>
+                    <TableRow key={record.id} className="group hover:bg-muted/50">
                       <TableCell className="whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          record.is_recs_faster_than_mthly_inflow_ill_arms
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                            : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
-                        }`}>
-                          {getDisplayValue(record.is_recs_faster_than_mthly_inflow_ill_arms)}
+                        <span className={getValueColor(record.per_change_arms_inflow)}>
+                          {record.per_change_arms_inflow > 0 ? '+' : ''}{record.per_change_arms_inflow.toFixed(1)}%
                         </span>
                       </TableCell>
-                      <TableCell className="text-right sticky right-0 bg-background">
-                        <div className="flex justify-end space-x-2">
+                      <TableCell className="whitespace-nowrap">
+                        <span className={getValueColor(record.per_change_explosive_inflow)}>
+                          {record.per_change_explosive_inflow > 0 ? '+' : ''}{record.per_change_explosive_inflow.toFixed(1)}%
+                        </span>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <span className={getValueColor(record.per_change_illegal_urea_transportation)}>
+                          {record.per_change_illegal_urea_transportation > 0 ? '+' : ''}{record.per_change_illegal_urea_transportation.toFixed(1)}%
+                        </span>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <div className="flex flex-col">
+                          <span className="font-medium">{record.no_perpetrator_convicted} convicted</span>
+                          <span className="text-xs text-muted-foreground">
+                            {record.no_appreh_perp_set_freebycourt} freed • {record.no_perpetrator_case_remain_pending} pending
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-muted-foreground">Arms:</span>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              record.is_recs_faster_than_mthly_inflow_ill_arms
+                                ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                                : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
+                            }`}>
+                              {getDisplayValue(record.is_recs_faster_than_mthly_inflow_ill_arms)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-muted-foreground">Explosives:</span>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              record.is_recs_faster_than_mthly_inflow_ill_exp
+                                ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                                : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
+                            }`}>
+                              {getDisplayValue(record.is_recs_faster_than_mthly_inflow_ill_exp)}
+                            </span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">{record.no_int_reports_shared_lea}</TableCell>
+                      <TableCell className="text-center">{record.no_letter_recvd_in_fdbk}</TableCell>
+                      <TableCell className="sticky right-0 bg-background group-hover:bg-muted/50">
+                        <div className="flex items-center justify-end gap-0.5">
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size="icon"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
                             onClick={() => openViewModal(record)}
-                            className="text-muted-foreground hover:text-foreground"
+                            title="View details"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button
-                            variant="secondary"
-                            size="sm"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
                             onClick={() => openEditModal(record)}
+                            title="Edit record"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
-                            variant="destructive"
-                            size="sm"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                             onClick={() => {
                               setDeleteTargetId(record.id);
                               setDeleteTargetName(`Arms / Explosives and Illegal Urea Record ${record.id}`);
                             }}
+                            title="Delete record"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -551,7 +591,7 @@ const ArmsExplosivesUrea: React.FC = () => {
           }
         }}
         id={deleteTargetId}
-        message={`Are you sure you want to delete "${deleteTargetName}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete this record? This action cannot be undone.`}
         onSubmit={handleDeleteSubmit}
         deleting={deleting}
         title="Delete Arms / Explosives and Illegal Urea Record"

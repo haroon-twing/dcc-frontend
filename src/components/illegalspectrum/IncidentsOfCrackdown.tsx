@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../UI/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../UI/Table';
 import { Button } from '../UI/Button';
-import { Eye, Edit, Trash2, Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, Edit, Trash2, Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
 import { publicApi } from '../../lib/api';
 import api from '../../lib/api';
 import IncidentsOfCrackdownFormModal from '../modals/illegalspectrum/IncidentsOfCrackdownFormModal';
@@ -68,15 +69,8 @@ const IncidentsOfCrackdown: React.FC<IncidentsOfCrackdownProps> = ({ armsExplosi
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      // const endpoint = armsExplosivesUreaId
-      //   ? `/arms-explosives-urea/get-all-crackdown-incidents/${armsExplosivesUreaId}`
-      //   : '/arms-explosives-urea/get-all-crackdown-incidents';
-      // const response = await publicApi.get(endpoint);
-      // const data = response.data?.data || response.data || [];
-      
-      // For now, using empty array
-      const data: any[] = [];
+      const response = await publicApi.get('/ispec-armsexpl-incidents-crackdown/get-all-ispec-armsexpl-incidents-crackdown');
+      const data = response.data?.data || [];
       
       const records: IncidentsOfCrackdown[] = data.map((item: any) => ({
         _id: item._id || item.id,
@@ -130,25 +124,14 @@ const IncidentsOfCrackdown: React.FC<IncidentsOfCrackdownProps> = ({ armsExplosi
     setShowModal(true);
   };
 
-  const handleView = async (record: IncidentsOfCrackdown) => {
+  const navigate = useNavigate();
+
+  const handleView = (record: IncidentsOfCrackdown) => {
     const recordId = record._id || record.id;
     if (!recordId) {
       return;
     }
-
-    setViewingRecord(record);
-    setEditingRecord(null);
-    setIsViewMode(true);
-    setFormData({
-      id: recordId,
-      date: formatDateForInput(record.date),
-      location: record.location,
-      no_people_apprehend: record.no_people_apprehend,
-      recoveries: record.recoveries,
-      details: record.details,
-      remarks: record.remarks,
-    });
-    setShowModal(true);
+    navigate(`/illegal-spectrum/incidents-crackdown/details?id=${recordId}`);
   };
 
   const handleEdit = (record: IncidentsOfCrackdown) => {
@@ -190,17 +173,15 @@ const IncidentsOfCrackdown: React.FC<IncidentsOfCrackdownProps> = ({ armsExplosi
         ...(armsExplosivesUreaId && { arms_explosives_urea_id: armsExplosivesUreaId }),
       };
 
-      if (editingRecord) {
-        // TODO: Replace with actual API endpoint when available
-        // await api.put(`/arms-explosives-urea/update-crackdown-incident/${formData.id}`, payload);
-        console.log('Update incident of crackdown:', formData.id, payload);
+      if (editingRecord && formData.id) {
+        await api.put(`/ispec-armsexpl-incidents-crackdown/update-ispec-armsexpl-incidents-crackdown/${formData.id}`, payload);
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // await api.post('/arms-explosives-urea/add-crackdown-incident', payload);
-        console.log('Add incident of crackdown:', payload);
+        await api.post('/ispec-armsexpl-incidents-crackdown/add-ispec-armsexpl-incidents-crackdown', payload);
       }
 
+      // Refresh the records after successful submission
       await fetchRecords();
+      
       setShowModal(false);
       setFormData(buildInitialForm());
       setEditingRecord(null);
@@ -219,24 +200,21 @@ const IncidentsOfCrackdown: React.FC<IncidentsOfCrackdownProps> = ({ armsExplosi
   };
 
   const handleDeleteSubmit = async (id: string | number) => {
-    setDeleting(true);
-
+    if (!id) return;
+    
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/arms-explosives-urea/delete-crackdown-incident/${id}`);
-      console.log('Delete incident of crackdown:', id);
-
+      setDeleting(true);
+      
+      await api.delete(`/ispec-armsexpl-incidents-crackdown/delete-ispec-armsexpl-incidents-crackdown/${id}`);
+      
+      // Refresh the records after successful deletion
       await fetchRecords();
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
       setRecordToDeleteName('');
-    } catch (error: any) {
-      console.error('Error deleting incident of crackdown:', error);
-      alert(
-        error?.response?.data?.message ||
-        error?.message ||
-        'Failed to delete incident of crackdown. Please try again.'
-      );
+    } catch (err) {
+      console.error('Error deleting record:', err);
+      alert('Failed to delete the record. Please try again.');
     } finally {
       setDeleting(false);
     }
@@ -407,26 +385,31 @@ const IncidentsOfCrackdown: React.FC<IncidentsOfCrackdownProps> = ({ armsExplosi
                     <TableCell>{record.no_people_apprehend}</TableCell>
                     <TableCell>{record.recoveries || '-'}</TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleView(record)}
-                          className="text-muted-foreground hover:text-foreground"
+                          className="h-8 w-8 p-0"
+                          title="View"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="secondary"
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(record)}
+                          className="h-8 w-8 p-0"
+                          title="Edit"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="destructive"
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(record)}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                          title="Delete"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

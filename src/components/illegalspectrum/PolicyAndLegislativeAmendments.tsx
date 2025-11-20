@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../UI/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../UI/Table';
 import { Button } from '../UI/Button';
-import { Eye, Edit, Trash2, Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, Edit, Trash2, Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
 import { publicApi } from '../../lib/api';
 import api from '../../lib/api';
 import PolicyAndLegislativeAmendmentFormModal from '../modals/illegalspectrum/PolicyAndLegislativeAmendmentFormModal';
@@ -71,15 +72,8 @@ const PolicyAndLegislativeAmendments: React.FC<PolicyAndLegislativeAmendmentsPro
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      // const endpoint = armsExplosivesUreaId
-      //   ? `/arms-explosives-urea/get-all-policy-amendments/${armsExplosivesUreaId}`
-      //   : '/arms-explosives-urea/get-all-policy-amendments';
-      // const response = await publicApi.get(endpoint);
-      // const data = response.data?.data || response.data || [];
-      
-      // For now, using empty array
-      const data: any[] = [];
+      const response = await publicApi.get('/ispec-armsexpl-policy-legislative-ammend/get-all-ispec-armsexpl-policy-legislative-ammend');
+      const data = response.data?.data || [];
       
       const records: PolicyAndLegislativeAmendment[] = data.map((item: any) => ({
         _id: item._id || item.id,
@@ -134,26 +128,16 @@ const PolicyAndLegislativeAmendments: React.FC<PolicyAndLegislativeAmendmentsPro
     setShowModal(true);
   };
 
-  const handleView = async (record: PolicyAndLegislativeAmendment) => {
+  const navigate = useNavigate();
+
+  const handleView = (record: PolicyAndLegislativeAmendment) => {
     const recordId = record._id || record.id;
     if (!recordId) {
       return;
     }
-
-    setViewingRecord(record);
-    setEditingRecord(null);
-    setIsViewMode(true);
-    setFormData({
-      id: recordId,
-      name_executive_order: record.name_executive_order,
-      area_focus: record.area_focus,
-      location_affected: record.location_affected,
-      passed_by: record.passed_by,
-      passed_on: formatDateForInput(record.passed_on),
-      expires_on: formatDateForInput(record.expires_on),
-      remarks: record.remarks,
-    });
-    setShowModal(true);
+    
+    // Navigate to the full-page view
+    navigate(`/illegal-spectrum/arms-explosives-urea/policy-legislative-amendments/view/${recordId}`);
   };
 
   const handleEdit = (record: PolicyAndLegislativeAmendment) => {
@@ -183,9 +167,10 @@ const PolicyAndLegislativeAmendments: React.FC<PolicyAndLegislativeAmendmentsPro
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
-
+    
     try {
+      setSubmitting(true);
+      
       const payload = {
         name_executive_order: formData.name_executive_order,
         area_focus: formData.area_focus,
@@ -194,20 +179,19 @@ const PolicyAndLegislativeAmendments: React.FC<PolicyAndLegislativeAmendmentsPro
         passed_on: formData.passed_on,
         expires_on: formData.expires_on,
         remarks: formData.remarks,
-        ...(armsExplosivesUreaId && { arms_explosives_urea_id: armsExplosivesUreaId }),
       };
-
-      if (editingRecord) {
-        // TODO: Replace with actual API endpoint when available
-        // await api.put(`/arms-explosives-urea/update-policy-amendment/${formData.id}`, payload);
-        console.log('Update policy and legislative amendment:', formData.id, payload);
+      
+      if (formData.id) {
+        // Update existing record
+        await api.put(`/ispec-armsexpl-policy-legislative-ammend/update-ispec-armsexpl-policy-legislative-ammend/${formData.id}`, payload);
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // await api.post('/arms-explosives-urea/add-policy-amendment', payload);
-        console.log('Add policy and legislative amendment:', payload);
+        // Add new record
+        await api.post('/ispec-armsexpl-policy-legislative-ammend/add-ispec-armsexpl-policy-legislative-ammend', payload);
       }
-
+      
+      // Refresh the records after successful submission
       await fetchRecords();
+      
       setShowModal(false);
       setFormData(buildInitialForm());
       setEditingRecord(null);
@@ -218,7 +202,7 @@ const PolicyAndLegislativeAmendments: React.FC<PolicyAndLegislativeAmendmentsPro
       alert(
         error?.response?.data?.message ||
         error?.message ||
-        `Failed to ${editingRecord ? 'update' : 'add'} policy and legislative amendment. Please try again.`
+        `Failed to ${formData.id ? 'update' : 'add'} policy and legislative amendment. Please try again.`
       );
     } finally {
       setSubmitting(false);
@@ -226,24 +210,25 @@ const PolicyAndLegislativeAmendments: React.FC<PolicyAndLegislativeAmendmentsPro
   };
 
   const handleDeleteSubmit = async (id: string | number) => {
-    setDeleting(true);
-
+    if (!id) return;
+    
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/arms-explosives-urea/delete-policy-amendment/${id}`);
-      console.log('Delete policy and legislative amendment:', id);
-
+      setDeleting(true);
+      
+      await api.delete(`/ispec-armsexpl-policy-legislative-ammend/delete-ispec-armsexpl-policy-legislative-ammend/${id}`);
+      
+      // Show success message
+      // You might want to use a toast notification here
+      console.log('Record deleted successfully');
+      
+      // Refresh the records after successful deletion
       await fetchRecords();
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
       setRecordToDeleteName('');
-    } catch (error: any) {
-      console.error('Error deleting policy and legislative amendment:', error);
-      alert(
-        error?.response?.data?.message ||
-        error?.message ||
-        'Failed to delete policy and legislative amendment. Please try again.'
-      );
+    } catch (err) {
+      console.error('Error deleting record:', err);
+      // You might want to show an error message to the user
     } finally {
       setDeleting(false);
     }
@@ -423,26 +408,31 @@ const PolicyAndLegislativeAmendments: React.FC<PolicyAndLegislativeAmendmentsPro
                     <TableCell>{record.passed_by || '-'}</TableCell>
                     <TableCell>{formatDate(record.passed_on)}</TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleView(record)}
-                          className="text-muted-foreground hover:text-foreground"
+                          className="h-8 w-8 p-0"
+                          title="View"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="secondary"
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(record)}
+                          className="h-8 w-8 p-0"
+                          title="Edit"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="destructive"
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(record)}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                          title="Delete"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

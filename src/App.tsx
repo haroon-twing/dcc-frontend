@@ -31,6 +31,7 @@ const OpsResponseDashboardPage = React.lazy(() => import('./pages/OpsResponseDas
 const OpsResponseListPage = React.lazy(() => import('./pages/OpsResponseList'));
 const OpsResponseDetailsPage = React.lazy(() => import('./pages/OpsResponseDetails'));
 const PIFTACReportsPage = React.lazy(() => import('./pages/PIFTACReports'));
+const ExtortionIncidentDetailsPage = React.lazy(() => import('./pages/ExtortionIncidentDetails'));
 const ProscribedTerroristOrganizationPage = React.lazy(() => import('./pages/ProscribedTerroristOrganization'));
 const CoordinationLEAsPage = React.lazy(() => import('./pages/CoordinationLEAs'));
 const RecoveryPage = React.lazy(() => import('./pages/Recovery'));
@@ -47,6 +48,8 @@ const ConnectivityStatusDetailsPage = React.lazy(() => import('./pages/Connectiv
 const AllocationIDsPIFTACPage = React.lazy(() => import('./pages/AllocationIDsPIFTAC'));
 const AllocationIDsPIFTACDetailsPage = React.lazy(() => import('./pages/AllocationIDsPIFTACDetails'));
 const PIFTACReportsIntelligencePage = React.lazy(() => import('./pages/PIFTACReportsIntelligence'));
+const ArmsExplosivesUreaDetailsPage = React.lazy(() => import('./pages/ArmsExplosivesUreaDetails'));
+const ArmsExplosivesUreaEditPage = React.lazy(() => import('./pages/ArmsExplosivesUreaEdit'));
 const PIFTACReportsIntelligenceDetailsPage = React.lazy(() => import('./pages/PIFTACReportsIntelligenceDetails'));
 const PredictiveAnalysisDetailPage = React.lazy(() => import('./pages/PredictiveAnalysisDetail'));
 const PredictiveAnalysisDetailsPage = React.lazy(() => import('./pages/PredictiveAnalysisDetails'));
@@ -55,6 +58,7 @@ const SourceReliabilityDetailsPage = React.lazy(() => import('./pages/SourceReli
 const IllegalSpectrumDashboardPage = React.lazy(() => import('./pages/IllegalSpectrumDashboard'));
 const ExtortionPage = React.lazy(() => import('./pages/Extortion'));
 const ExtortionDetailsPage = React.lazy(() => import('./pages/ExtortionDetails'));
+const MajorExtortionistDetailsPage = React.lazy(() => import('./pages/MajorExtortionistDetails'));
 const ArmsExplosivesUreaPage = React.lazy(() => import('./pages/ArmsExplosivesUrea'));
 const IllegalSimsPage = React.lazy(() => import('./pages/IllegalSims'));
 const IllegalWarehousesPage = React.lazy(() => import('./pages/IllegalWarehouses'));
@@ -62,7 +66,12 @@ const NCPVehiclesPage = React.lazy(() => import('./pages/NCPVehicles'));
 const HumanTraffickingPage = React.lazy(() => import('./pages/HumanTrafficking'));
 const SmugglingPage = React.lazy(() => import('./pages/Smuggling'));
 const HawalaHundiPage = React.lazy(() => import('./pages/HawalaHundi'));
+const HawalaHundiDetailsPage = React.lazy(() => import('./pages/HawalaHundiDetails'));
+const MajorHawalaHundiDealerDetailsPage = React.lazy(() => import('./pages/MajorHawalaHundiDealerDetails'));
+const HawalaHundiIncidentsDetailsPage = React.lazy(() => import('./pages/HawalaHundiIncidentsDetails'));
 const BlackMarketDronesPage = React.lazy(() => import('./pages/BlackMarketDrones'));
+const PolicyAndLegislativeAmendmentDetails = React.lazy(() => import('./pages/PolicyAndLegislativeAmendmentDetails'));
+const IncidentsOfCrackdownDetails = React.lazy(() => import('./pages/IncidentsOfCrackdownDetails'));
 
 function App() {
   return (
@@ -368,6 +377,20 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
+          <Route path="/illegal-spectrum/extortion/incidents/details" element={
+            <ProtectedRoute>
+              <Layout>
+                <ExtortionIncidentDetailsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/extortion/major-extortionists/details" element={
+            <ProtectedRoute>
+              <Layout>
+                <MajorExtortionistDetailsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
           <Route path="/illegal-spectrum/arms-explosives-urea" element={
             <ProtectedRoute>
               <Layout>
@@ -375,6 +398,31 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
+          <Route path="/illegal-spectrum/arms-explosives-urea/policy-legislative-amendments/view/:id" element={
+            <ProtectedRoute>
+              <Layout>
+                <PolicyAndLegislativeAmendmentDetails />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/incidents-crackdown/details" element={
+            <ProtectedRoute>
+              <Layout>
+                <IncidentsOfCrackdownDetails />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/arms-explosives-urea/view/:id" element={
+            <ProtectedRoute>
+              <Layout>
+                <ArmsExplosivesUreaDetailsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/arms-explosives-urea/edit/:id" element={
+            <ProtectedRoute>
+              <Layout>
+                <ArmsExplosivesUreaEditPage />
           <Route path="/illegal-spectrum/illegal-sims" element={
             <ProtectedRoute>
               <Layout>
@@ -414,6 +462,27 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <HawalaHundiPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/hawala-hundi/details" element={
+            <ProtectedRoute>
+              <Layout>
+                <HawalaHundiDetailsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/major-hawala-hundi-dealer/details" element={
+            <ProtectedRoute>
+              <Layout>
+                <MajorHawalaHundiDealerDetailsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/hawala-hundi/incidents/details" element={
+            <ProtectedRoute>
+              <Layout>
+                <HawalaHundiIncidentsDetailsPage />
               </Layout>
             </ProtectedRoute>
           } />

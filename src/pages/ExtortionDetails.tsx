@@ -44,13 +44,8 @@ const ExtortionDetails: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        // TODO: Replace with actual API endpoint when available
-        // const endpoint = `/extortion/get-single-extortion/${recordId}`;
-        // const response = await publicApi.get(endpoint);
-        // const data = response.data?.data || response.data;
-        
-        // For now, using mock data structure
-        const data: any = null;
+        const response = await publicApi.get(`/ispec-extortion/get-single-ispec-extortion/${recordId}`);
+        const data = response.data?.data || response.data;
         
         if (data) {
           setExtortionData({
@@ -74,11 +69,20 @@ const ExtortionDetails: React.FC = () => {
         } else {
           setError('No data received from server');
         }
-      } catch (err: any) {
-        console.error('Error fetching extortion details:', err);
+      } catch (err: unknown) {
+        const error = err as {
+          response?: {
+            data?: {
+              message?: string;
+            };
+          };
+          message?: string;
+        };
+        
+        console.error('Error fetching extortion details:', error);
         setError(
-          err?.response?.data?.message || 
-          err?.message || 
+          error?.response?.data?.message || 
+          error?.message || 
           'Failed to load extortion details. Please try again.'
         );
       } finally {
