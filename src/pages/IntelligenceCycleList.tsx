@@ -114,7 +114,7 @@ const IntelligenceCycleList: React.FC = () => {
       window.alert('Record ID is required to view details');
       return;
     }
-    navigate(`/intelligence-cycle/details?id=${recordId}`);
+    navigate(`/intelligence-cycle/list/details?id=${recordId}`);
   };
 
   const handleEdit = (record: IntelligenceCycle) => {

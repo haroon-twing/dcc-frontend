@@ -84,6 +84,18 @@ const Navigation: React.FC = () => {
         { name: "Source Reliability & Information Credibility Index", href: "/intelligence-cycle/source-reliability" },
       ],
     },
+    {
+      name: "Illegal Spectrum",
+      href: "/illegal-spectrum/dashboard",
+      icon: "⚖️",
+      children: [
+        { name: "Dashboard", href: "/illegal-spectrum/dashboard" },
+        { name: "Extortion", href: "/illegal-spectrum/extortion" },
+        { name: "Arms / Explosives and Illegal Urea transportation", href: "/illegal-spectrum/arms-explosives-urea" },
+        { name: "Hawala/ Hundi", href: "/illegal-spectrum/hawala-hundi" },
+        { name: "Black Market of Drones, NVDs etc", href: "/illegal-spectrum/black-market-drones" },
+      ],
+    },
     { name: "Users", href: "/users", icon: "👥" },
     // { name: "Departments", href: "/departments", icon: "🏢" },
     // { name: "Sections", href: "/sections", icon: "📁" },
@@ -95,7 +107,7 @@ const Navigation: React.FC = () => {
 
   useEffect(() => {
     const parentWithActiveChild = navigation.find((item) =>
-      item.children?.some((child) => location.pathname.startsWith(child.href))
+      item.children?.some((child) => child && location.pathname.startsWith(child.href))
     );
     const nextOpen = parentWithActiveChild ? parentWithActiveChild.name : null;
     setOpenDropdown((prev) => (prev === nextOpen ? prev : nextOpen));
@@ -129,7 +141,7 @@ const Navigation: React.FC = () => {
           <nav className="space-y-2">
           {navigation.map((item) => {
             const childIsActive = item.children?.some(
-              (child) => location.pathname === child.href
+              (child) => child && location.pathname === child.href
             );
             const isActive =
               location.pathname === item.href ||
@@ -184,6 +196,7 @@ const Navigation: React.FC = () => {
                 {item.children && isOpen && (
                   <div className="ml-6 space-y-1 pl-3 border-l-2 border-purple-400/30 dark:border-purple-400/30">
                     {item.children.map((child) => {
+                      if (!child) return null;
                       const isChildActive = location.pathname === child.href;
                       return (
                         <Link
