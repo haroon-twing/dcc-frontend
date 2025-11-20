@@ -52,6 +52,12 @@ const PredictiveAnalysisDetailPage = React.lazy(() => import('./pages/Predictive
 const PredictiveAnalysisDetailsPage = React.lazy(() => import('./pages/PredictiveAnalysisDetails'));
 const SourceReliabilityIndexPage = React.lazy(() => import('./pages/SourceReliabilityIndex'));
 const SourceReliabilityDetailsPage = React.lazy(() => import('./pages/SourceReliabilityDetails'));
+const IllegalSpectrumDashboardPage = React.lazy(() => import('./pages/IllegalSpectrumDashboard'));
+const ExtortionPage = React.lazy(() => import('./pages/Extortion'));
+const ExtortionDetailsPage = React.lazy(() => import('./pages/ExtortionDetails'));
+const ArmsExplosivesUreaPage = React.lazy(() => import('./pages/ArmsExplosivesUrea'));
+const HawalaHundiPage = React.lazy(() => import('./pages/HawalaHundi'));
+const BlackMarketDronesPage = React.lazy(() => import('./pages/BlackMarketDrones'));
 
 function App() {
   return (
@@ -69,6 +75,7 @@ function App() {
           <Route path="/ngo" element={<Navigate to="/ngo/dashboard" replace />} />
           <Route path="/ops-response" element={<Navigate to="/ops-response/dashboard" replace />} />
           <Route path="/intelligence-cycle" element={<Navigate to="/intelligence-cycle/dashboard" replace />} />
+          <Route path="/illegal-spectrum" element={<Navigate to="/illegal-spectrum/dashboard" replace />} />
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <Layout>
@@ -332,6 +339,48 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <SourceReliabilityDetailsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/dashboard" element={
+            <ProtectedRoute>
+              <Layout>
+                <IllegalSpectrumDashboardPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/extortion" element={
+            <ProtectedRoute>
+              <Layout>
+                <ExtortionPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/extortion/details" element={
+            <ProtectedRoute>
+              <Layout>
+                <ExtortionDetailsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/arms-explosives-urea" element={
+            <ProtectedRoute>
+              <Layout>
+                <ArmsExplosivesUreaPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/hawala-hundi" element={
+            <ProtectedRoute>
+              <Layout>
+                <HawalaHundiPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/black-market-drones" element={
+            <ProtectedRoute>
+              <Layout>
+                <BlackMarketDronesPage />
               </Layout>
             </ProtectedRoute>
           } />
