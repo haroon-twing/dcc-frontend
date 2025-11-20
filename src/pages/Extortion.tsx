@@ -75,12 +75,61 @@ const Extortion: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // TODO: Replace with actual API endpoint when available
-        // const response = await publicApi.get('/get-all-extortion');
-        // For now, using empty array
-        setExtortionRecords([]);
-      } catch (error) {
+        console.log('Fetching extortion records...');
+        const response = await publicApi.get('/ispec-extortion/get-all-ispec-extortion');
+        
+        // Handle different response formats
+        let data = response.data;
+        if (Array.isArray(data)) {
+          data = { data };
+        }
+        
+        const recordsData = data?.data || data || [];
+        if (!Array.isArray(recordsData)) {
+          throw new Error('Unexpected response format from API');
+        }
+        
+        console.log(`Fetched ${recordsData.length} extortion records`);
+        
+        // Map the data to our interface
+        const mappedData = recordsData.map((record: any) => ({
+          id: record?._id || record?.id || `ext-${Math.random().toString(36).substr(2, 9)}`,
+          is_db_ext_incidents_formed: record?.is_db_ext_incidents_formed || false,
+          is_classified_2types: record?.is_classified_2types || false,
+          is_estd_ct_helpline: record?.is_estd_ct_helpline || false,
+          no_calls_recvd_ct_helpline: record?.no_calls_recvd_ct_helpline || 0,
+          is_public_awareness_develop: record?.is_public_awareness_develop || false,
+          no_awareness_socialmedia: record?.no_awareness_socialmedia || 0,
+          no_awareness_printmedia: record?.no_awareness_printmedia || 0,
+          no_awareness_electmedia: record?.no_awareness_electmedia || 0,
+          no_calls_unrelated_to_ct: record?.no_calls_unrelated_to_ct || 0,
+          no_calls_leading_action_taken_lea: record?.no_calls_leading_action_taken_lea || 0,
+          no_ext_ident_shared_with_lea: record?.no_ext_ident_shared_with_lea || 0,
+          no_ext_appreh_multiagency_effort: record?.no_ext_appreh_multiagency_effort || 0,
+          no_ext_neutr_multiagency_effort: record?.no_ext_neutr_multiagency_effort || 0,
+          no_ext_appreh_via_multiagency_convicted: record?.no_ext_appreh_via_multiagency_convicted || 0,
+          no_ext_appreh_via_multiagency_freebycourt: record?.no_ext_appreh_via_multiagency_freebycourt || 0,
+          no_ext_appreh_via_multiagency_case_pending: record?.no_ext_appreh_via_multiagency_case_pending || 0,
+        }));
+        
+        setExtortionRecords(mappedData);
+      } catch (err: unknown) {
+        const error = err as {
+          response?: {
+            data?: {
+              message?: string;
+            };
+          };
+          message?: string;
+        };
+        
         console.error('Error fetching extortion records:', error);
+        // Show error to user
+        window.alert(
+          error?.response?.data?.message || 
+          error?.message || 
+          'Failed to load extortion records. Please try again.'
+        );
         setExtortionRecords([]);
       } finally {
         setLoading(false);
@@ -114,26 +163,58 @@ const Extortion: React.FC = () => {
         no_ext_appreh_via_multiagency_case_pending: formData.no_ext_appreh_via_multiagency_case_pending,
       };
 
-      let response;
       if (editingId) {
-        // TODO: Replace with actual API endpoint when available
-        // response = await api.put(`/update-extortion/${editingId}`, payload);
-        console.log('Update extortion:', editingId, payload);
+        // Update existing record
+        console.log('Updating extortion record:', editingId, payload);
+        await api.put(`/ispec-extortion/update-ispec-extortion/${editingId}`, payload);
+        window.alert('Extortion record updated successfully!');
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // response = await api.post('/add-extortion', payload);
-        console.log('Add extortion:', payload);
+        // Create new record
+        console.log('Creating new extortion record:', payload);
+        await api.post('/ispec-extortion/add-ispec-extortion', payload);
+        window.alert('Extortion record added successfully!');
       }
 
-      // TODO: Refresh the list after successful submission
-      // const extortionResponse = await publicApi.get('/get-all-extortion');
-      // Process and set records
+      // Refresh the list after successful submission
+      const response = await publicApi.get('/ispec-extortion/get-all-ispec-extortion');
+      const recordsData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+      
+      const mappedData = recordsData.map((record: any) => ({
+        id: record?._id || record?.id,
+        is_db_ext_incidents_formed: record?.is_db_ext_incidents_formed || false,
+        is_classified_2types: record?.is_classified_2types || false,
+        is_estd_ct_helpline: record?.is_estd_ct_helpline || false,
+        no_calls_recvd_ct_helpline: record?.no_calls_recvd_ct_helpline || 0,
+        is_public_awareness_develop: record?.is_public_awareness_develop || false,
+        no_awareness_socialmedia: record?.no_awareness_socialmedia || 0,
+        no_awareness_printmedia: record?.no_awareness_printmedia || 0,
+        no_awareness_electmedia: record?.no_awareness_electmedia || 0,
+        no_calls_unrelated_to_ct: record?.no_calls_unrelated_to_ct || 0,
+        no_calls_leading_action_taken_lea: record?.no_calls_leading_action_taken_lea || 0,
+        no_ext_ident_shared_with_lea: record?.no_ext_ident_shared_with_lea || 0,
+        no_ext_appreh_multiagency_effort: record?.no_ext_appreh_multiagency_effort || 0,
+        no_ext_neutr_multiagency_effort: record?.no_ext_neutr_multiagency_effort || 0,
+        no_ext_appreh_via_multiagency_convicted: record?.no_ext_appreh_via_multiagency_convicted || 0,
+        no_ext_appreh_via_multiagency_freebycourt: record?.no_ext_appreh_via_multiagency_freebycourt || 0,
+        no_ext_appreh_via_multiagency_case_pending: record?.no_ext_appreh_via_multiagency_case_pending || 0,
+      }));
+      
+      setExtortionRecords(mappedData);
 
       // Close modal and reset form
       setShowAddModal(false);
       setFormData(buildInitialForm());
       setEditingId(null);
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err as {
+        response?: {
+          data?: {
+            message?: string;
+          };
+        };
+        message?: string;
+      };
+      
       console.error('Error submitting extortion record:', error);
       alert(
         error?.response?.data?.message ||
@@ -149,6 +230,10 @@ const Extortion: React.FC = () => {
     setEditingId(null);
     setFormData(buildInitialForm());
     setShowAddModal(true);
+  };
+
+  const openViewModal = (id: string) => {
+    navigate(`/illegal-spectrum/extortion/details?id=${id}`);
   };
 
   const openEditModal = (record: ExtortionRecord) => {
@@ -180,18 +265,49 @@ const Extortion: React.FC = () => {
     setDeleting(true);
 
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/delete-extortion/${id}`);
-      console.log('Delete extortion:', id);
-
-      // TODO: Refresh the list after successful deletion
-      // const extortionResponse = await publicApi.get('/get-all-extortion');
-      // Process and set records
-
+      console.log('Deleting extortion record:', id);
+      await api.delete(`/ispec-extortion/delete-ispec-extortion/${id}`);
+      
+      // Refresh the list after successful deletion
+      const response = await publicApi.get('/ispec-extortion/get-all-ispec-extortion');
+      const recordsData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+      
+      const mappedData = recordsData.map((record: any) => ({
+        id: record?._id || record?.id,
+        is_db_ext_incidents_formed: record?.is_db_ext_incidents_formed || false,
+        is_classified_2types: record?.is_classified_2types || false,
+        is_estd_ct_helpline: record?.is_estd_ct_helpline || false,
+        no_calls_recvd_ct_helpline: record?.no_calls_recvd_ct_helpline || 0,
+        is_public_awareness_develop: record?.is_public_awareness_develop || false,
+        no_awareness_socialmedia: record?.no_awareness_socialmedia || 0,
+        no_awareness_printmedia: record?.no_awareness_printmedia || 0,
+        no_awareness_electmedia: record?.no_awareness_electmedia || 0,
+        no_calls_unrelated_to_ct: record?.no_calls_unrelated_to_ct || 0,
+        no_calls_leading_action_taken_lea: record?.no_calls_leading_action_taken_lea || 0,
+        no_ext_ident_shared_with_lea: record?.no_ext_ident_shared_with_lea || 0,
+        no_ext_appreh_multiagency_effort: record?.no_ext_appreh_multiagency_effort || 0,
+        no_ext_neutr_multiagency_effort: record?.no_ext_neutr_multiagency_effort || 0,
+        no_ext_appreh_via_multiagency_convicted: record?.no_ext_appreh_via_multiagency_convicted || 0,
+        no_ext_appreh_via_multiagency_freebycourt: record?.no_ext_appreh_via_multiagency_freebycourt || 0,
+        no_ext_appreh_via_multiagency_case_pending: record?.no_ext_appreh_via_multiagency_case_pending || 0,
+      }));
+      
+      setExtortionRecords(mappedData);
+      window.alert('Extortion record deleted successfully!');
+      
       // Close modal
       setDeleteTargetId(null);
       setDeleteTargetName(null);
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err as {
+        response?: {
+          data?: {
+            message?: string;
+          };
+        };
+        message?: string;
+      };
+      
       console.error('Error deleting extortion record:', error);
       alert(
         error?.response?.data?.message ||
@@ -410,31 +526,36 @@ const Extortion: React.FC = () => {
                     <TableCell>{getDisplayValue(record, 'no_ext_appreh_via_multiagency_convicted')}</TableCell>
                     <TableCell>{getDisplayValue(record, 'no_ext_appreh_via_multiagency_case_pending')}</TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
+                      <div className="flex justify-end gap-2">
                         <Button
                           variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/illegal-spectrum/extortion/details?id=${record.id}`)}
-                          className="text-muted-foreground hover:text-foreground"
+                          size="icon"
+                          onClick={() => openViewModal(record.id)}
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
                         >
                           <Eye className="h-4 w-4" />
+                          <span className="sr-only">View</span>
                         </Button>
                         <Button
-                          variant="secondary"
-                          size="sm"
+                          variant="ghost"
+                          size="icon"
                           onClick={() => openEditModal(record)}
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
                         >
                           <Edit className="h-4 w-4" />
+                          <span className="sr-only">Edit</span>
                         </Button>
                         <Button
-                          variant="destructive"
-                          size="sm"
+                          variant="ghost"
+                          size="icon"
                           onClick={() => {
                             setDeleteTargetId(record.id);
                             setDeleteTargetName(`Extortion Record ${record.id}`);
                           }}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
                         >
                           <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Delete</span>
                         </Button>
                       </div>
                     </TableCell>
@@ -528,7 +649,6 @@ const Extortion: React.FC = () => {
         title={modalTitle}
         submitLabel={submitLabel}
         submitting={submitting}
-        viewMode={false}
       />
 
       <DeleteModal
@@ -540,7 +660,7 @@ const Extortion: React.FC = () => {
           }
         }}
         id={deleteTargetId}
-        message={`Are you sure you want to delete "${deleteTargetName}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete this record? This action cannot be undone.`}
         onSubmit={handleDeleteSubmit}
         deleting={deleting}
         title="Delete Extortion Record"

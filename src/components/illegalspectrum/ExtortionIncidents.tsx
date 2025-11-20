@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../UI/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../UI/Table';
 import { Button } from '../UI/Button';
@@ -74,15 +75,9 @@ const ExtortionIncidents: React.FC<ExtortionIncidentsProps> = ({ extortionId }) 
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      // const endpoint = extortionId
-      //   ? `/extortion/get-all-extortion-incidents/${extortionId}`
-      //   : '/extortion/get-all-extortion-incidents';
-      // const response = await publicApi.get(endpoint);
-      // const data = response.data?.data || response.data || [];
-      
-      // For now, using empty array
-      const data: any[] = [];
+      const endpoint = '/ispec-extortion-incidents/get-all-ispec-extortion-incidents';
+      const response = await publicApi.get(endpoint);
+      const data = response.data?.data || response.data || [];
       
       const records: ExtortionIncident[] = data.map((item: any) => ({
         _id: item._id || item.id,
@@ -138,27 +133,17 @@ const ExtortionIncidents: React.FC<ExtortionIncidentsProps> = ({ extortionId }) 
     setShowModal(true);
   };
 
-  const handleView = async (record: ExtortionIncident) => {
+  const navigate = useNavigate();
+
+  const handleView = (record: ExtortionIncident) => {
     const recordId = record._id || record.id;
     if (!recordId) {
+      console.error('No record ID found for viewing');
       return;
     }
-
-    setViewingRecord(record);
-    setEditingRecord(null);
-    setIsViewMode(true);
-    setFormData({
-      id: recordId,
-      location: record.location,
-      date: formatDateForInput(record.date),
-      extorted_from: record.extorted_from,
-      extorted_by: record.extorted_by,
-      affiliation_terr_grp: record.affiliation_terr_grp,
-      amount_extorted: record.amount_extorted,
-      action_taken: record.action_taken,
-      remarks: record.remarks,
-    });
-    setShowModal(true);
+    
+    // Navigate to the details page with the record ID
+    navigate(`/illegal-spectrum/extortion/incidents/details?id=${encodeURIComponent(recordId)}`);
   };
 
   const handleEdit = (record: ExtortionIncident) => {
@@ -205,52 +190,41 @@ const ExtortionIncidents: React.FC<ExtortionIncidentsProps> = ({ extortionId }) 
       };
 
       if (editingRecord) {
-        // TODO: Replace with actual API endpoint when available
-        // await api.put(`/extortion/update-extortion-incident/${formData.id}`, payload);
-        console.log('Update extortion incident:', formData.id, payload);
+        const recordId = editingRecord._id || editingRecord.id || formData.id;
+        if (!recordId) {
+          throw new Error('No record ID found for update');
+        }
+        await api.put(`/ispec-extortion-incidents/update-ispec-extortion-incident/${recordId}`, payload);
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // await api.post('/extortion/add-extortion-incident', payload);
-        console.log('Add extortion incident:', payload);
+        await api.post('/ispec-extortion-incidents/add-ispec-extortion-incident', payload);
       }
 
-      await fetchRecords();
       setShowModal(false);
+      fetchRecords();
       setFormData(buildInitialForm());
       setEditingRecord(null);
       setViewingRecord(null);
-      setIsViewMode(false);
-    } catch (error: any) {
-      console.error('Error submitting extortion incident:', error);
-      alert(
-        error?.response?.data?.message ||
-        error?.message ||
-        `Failed to ${editingRecord ? 'update' : 'add'} extortion incident. Please try again.`
-      );
+    } catch (error) {
+      console.error('Error saving extortion incident:', error);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDeleteSubmit = async (id: string | number) => {
+  const handleDeleteSubmit = async () => {
+    if (!recordToDeleteId) return;
+    
     setDeleting(true);
-
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/extortion/delete-extortion-incident/${id}`);
-      console.log('Delete extortion incident:', id);
-
-      await fetchRecords();
+      await api.delete(`/ispec-extortion-incidents/delete-ispec-extortion-incident/${recordToDeleteId}`);
+      
+      // Remove the deleted record from the state
+      setRecords(records.filter(record => record.id !== recordToDeleteId && record._id !== recordToDeleteId));
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
       setRecordToDeleteName('');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error deleting extortion incident:', error);
-      alert(
-        error?.response?.data?.message ||
-        error?.message ||
-        'Failed to delete extortion incident. Please try again.'
-      );
     } finally {
       setDeleting(false);
     }
@@ -431,27 +405,32 @@ const ExtortionIncidents: React.FC<ExtortionIncidentsProps> = ({ extortionId }) 
                     <TableCell>{record.extorted_from}</TableCell>
                     <TableCell>{record.extorted_by}</TableCell>
                     <TableCell>{record.amount_extorted.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleView(record)}
-                          className="text-muted-foreground hover:text-foreground"
+                          className="h-8 w-8 p-0"
+                          title="View"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="secondary"
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(record)}
+                          className="h-8 w-8 p-0"
+                          title="Edit"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="destructive"
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(record)}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                          title="Delete"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

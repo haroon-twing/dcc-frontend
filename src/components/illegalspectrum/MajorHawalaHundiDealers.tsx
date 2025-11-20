@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../UI/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../UI/Table';
 import { Button } from '../UI/Button';
-import { Eye, Edit, Trash2, Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, Edit, Trash2, Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
 import { publicApi } from '../../lib/api';
 import api from '../../lib/api';
 import MajorHawalaHundiDealerFormModal from '../modals/illegalspectrum/MajorHawalaHundiDealerFormModal';
@@ -71,15 +72,8 @@ const MajorHawalaHundiDealers: React.FC<MajorHawalaHundiDealersProps> = ({ hawal
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      // const endpoint = hawalaHundiId
-      //   ? `/hawala-hundi/get-all-major-dealers/${hawalaHundiId}`
-      //   : '/hawala-hundi/get-all-major-dealers';
-      // const response = await publicApi.get(endpoint);
-      // const data = response.data?.data || response.data || [];
-      
-      // For now, using empty array
-      const data: any[] = [];
+      const response = await publicApi.get('/ispec-hawala-hundi-dealers/get-all-ispec-hawala-hundi-dealers');
+      const data = response.data?.data || response.data || [];
       
       const records: MajorHawalaHundiDealer[] = data.map((item: any) => ({
         _id: item._id || item.id,
@@ -88,7 +82,7 @@ const MajorHawalaHundiDealers: React.FC<MajorHawalaHundiDealersProps> = ({ hawal
         present_residence: item.present_residence || '',
         domicile: item.domicile || '',
         is_fam_mem_dec_terr: item.is_fam_mem_dec_terr || false,
-        affiliation_tgt_grp: item.affiliation_tgt_grp || '',
+        affiliation_tgt_grp: item.affiliation_tgt_grp || 'None',
         remarks: item.remarks || '',
         is_active: item.is_active !== undefined ? item.is_active : true,
       }));
@@ -96,6 +90,7 @@ const MajorHawalaHundiDealers: React.FC<MajorHawalaHundiDealersProps> = ({ hawal
       setRecords(records);
     } catch (err: any) {
       console.error('Error fetching major hawala/hundi dealers:', err);
+      alert('Failed to fetch records. Please try again.');
       setRecords([]);
     } finally {
       setLoading(false);
@@ -114,26 +109,16 @@ const MajorHawalaHundiDealers: React.FC<MajorHawalaHundiDealersProps> = ({ hawal
     setShowModal(true);
   };
 
-  const handleView = async (record: MajorHawalaHundiDealer) => {
+  const navigate = useNavigate();
+
+  const handleView = (record: MajorHawalaHundiDealer) => {
     const recordId = record._id || record.id;
     if (!recordId) {
+      alert('Invalid record ID');
       return;
     }
-
-    setViewingRecord(record);
-    setEditingRecord(null);
-    setIsViewMode(true);
-    setFormData({
-      id: recordId,
-      name: record.name,
-      present_residence: record.present_residence,
-      domicile: record.domicile,
-      is_fam_mem_dec_terr: record.is_fam_mem_dec_terr,
-      affiliation_tgt_grp: record.affiliation_tgt_grp,
-      remarks: record.remarks,
-      is_active: record.is_active,
-    });
-    setShowModal(true);
+    
+    navigate(`/illegal-spectrum/major-hawala-hundi-dealer/details?id=${recordId}`);
   };
 
   const handleEdit = (record: MajorHawalaHundiDealer) => {
@@ -173,57 +158,47 @@ const MajorHawalaHundiDealers: React.FC<MajorHawalaHundiDealersProps> = ({ hawal
         is_fam_mem_dec_terr: formData.is_fam_mem_dec_terr,
         affiliation_tgt_grp: formData.affiliation_tgt_grp,
         remarks: formData.remarks,
-        is_active: formData.is_active,
-        ...(hawalaHundiId && { hawala_hundi_id: hawalaHundiId }),
+        is_active: formData.is_active
       };
 
       if (editingRecord) {
-        // TODO: Replace with actual API endpoint when available
-        // await api.put(`/hawala-hundi/update-major-dealer/${formData.id}`, payload);
-        console.log('Update major hawala/hundi dealer:', formData.id, payload);
+        // Update existing record
+        await api.put(`/ispec-hawala-hundi-dealers/update-ispec-hawala-hundi-dealer/${editingRecord.id}`, payload);
+        await fetchRecords(); // Refresh the list
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // await api.post('/hawala-hundi/add-major-dealer', payload);
-        console.log('Add major hawala/hundi dealer:', payload);
+        // Add new record
+        await api.post('/ispec-hawala-hundi-dealers/add-ispec-hawala-hundi-dealer', payload);
+        await fetchRecords(); // Refresh the list
       }
-
-      await fetchRecords();
-      setShowModal(false);
+      
+      // Reset form and close modal
       setFormData(buildInitialForm());
+      setShowModal(false);
       setEditingRecord(null);
-      setViewingRecord(null);
       setIsViewMode(false);
-    } catch (error: any) {
-      console.error('Error submitting major hawala/hundi dealer:', error);
-      alert(
-        error?.response?.data?.message ||
-        error?.message ||
-        `Failed to ${editingRecord ? 'update' : 'add'} major hawala/hundi dealer. Please try again.`
-      );
+    } catch (err) {
+      console.error('Error saving major hawala/hundi dealer:', err);
+      alert('Failed to save record. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDeleteSubmit = async (id: string | number) => {
+  const handleDeleteSubmit = async () => {
+    if (!recordToDeleteId) return;
+    
     setDeleting(true);
-
+    
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/hawala-hundi/delete-major-dealer/${id}`);
-      console.log('Delete major hawala/hundi dealer:', id);
-
-      await fetchRecords();
+      await api.delete(`/ispec-hawala-hundi-dealers/delete-ispec-hawala-hundi-dealer/${recordToDeleteId}`);
+      await fetchRecords(); // Refresh the list
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
       setRecordToDeleteName('');
-    } catch (error: any) {
-      console.error('Error deleting major hawala/hundi dealer:', error);
-      alert(
-        error?.response?.data?.message ||
-        error?.message ||
-        'Failed to delete major hawala/hundi dealer. Please try again.'
-      );
+      alert('Record deleted successfully');
+    } catch (err) {
+      console.error('Error deleting major hawala/hundi dealer:', err);
+      alert('Failed to delete record. Please try again.');
     } finally {
       setDeleting(false);
     }
@@ -414,27 +389,32 @@ const MajorHawalaHundiDealers: React.FC<MajorHawalaHundiDealersProps> = ({ hawal
                         {getDisplayValue(record.is_active)}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleView(record)}
-                          className="text-muted-foreground hover:text-foreground"
+                          className="h-8 w-8 p-0"
+                          title="View"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="secondary"
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(record)}
+                          className="h-8 w-8 p-0"
+                          title="Edit"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="destructive"
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(record)}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                          title="Delete"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

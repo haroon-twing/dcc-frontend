@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../UI/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../UI/Table';
 import { Button } from '../UI/Button';
-import { Eye, Edit, Trash2, Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, Pencil, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { publicApi } from '../../lib/api';
 import api from '../../lib/api';
 import IncidentsOfCrackdownHawalaHundiFormModal from '../modals/illegalspectrum/IncidentsOfCrackdownHawalaHundiFormModal';
@@ -36,6 +37,7 @@ export interface IncidentsOfCrackdownHawalaHundiFormState {
 }
 
 const IncidentsOfCrackdownHawalaHundi: React.FC<IncidentsOfCrackdownHawalaHundiProps> = ({ hawalaHundiId }) => {
+  const navigate = useNavigate();
   const [records, setRecords] = useState<IncidentsOfCrackdownHawalaHundi[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -71,15 +73,8 @@ const IncidentsOfCrackdownHawalaHundi: React.FC<IncidentsOfCrackdownHawalaHundiP
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      // const endpoint = hawalaHundiId
-      //   ? `/hawala-hundi/get-all-crackdown-incidents/${hawalaHundiId}`
-      //   : '/hawala-hundi/get-all-crackdown-incidents';
-      // const response = await publicApi.get(endpoint);
-      // const data = response.data?.data || response.data || [];
-      
-      // For now, using empty array
-      const data: any[] = [];
+      const response = await publicApi.get('/ispec-hawala-hundi-incidents-crackdown-dealers/get-all-ispec-hawala-hundi-incidents-crackdown-dealers');
+      const data = response.data?.data || response.data || [];
       
       const records: IncidentsOfCrackdownHawalaHundi[] = data.map((item: any) => ({
         _id: item._id || item.id,
@@ -142,26 +137,14 @@ const IncidentsOfCrackdownHawalaHundi: React.FC<IncidentsOfCrackdownHawalaHundiP
     setShowModal(true);
   };
 
-  const handleView = async (record: IncidentsOfCrackdownHawalaHundi) => {
+  const handleView = (record: IncidentsOfCrackdownHawalaHundi) => {
     const recordId = record._id || record.id;
     if (!recordId) {
       return;
     }
-
-    setViewingRecord(record);
-    setEditingRecord(null);
-    setIsViewMode(true);
-    setFormData({
-      id: recordId,
-      date: formatDateForInput(record.date),
-      location: record.location,
-      no_people_apprehend: record.no_people_apprehend,
-      recoveries_pkr: record.recoveries_pkr,
-      details: record.details,
-      remarks: record.remarks,
-      is_active: record.is_active,
-    });
-    setShowModal(true);
+    
+    // Navigate to the details page with the record ID
+    navigate(`/illegal-spectrum/hawala-hundi/incidents/details?id=${recordId}`);
   };
 
   const handleEdit = (record: IncidentsOfCrackdownHawalaHundi) => {
@@ -205,14 +188,12 @@ const IncidentsOfCrackdownHawalaHundi: React.FC<IncidentsOfCrackdownHawalaHundiP
         ...(hawalaHundiId && { hawala_hundi_id: hawalaHundiId }),
       };
 
-      if (editingRecord) {
-        // TODO: Replace with actual API endpoint when available
-        // await api.put(`/hawala-hundi/update-crackdown-incident/${formData.id}`, payload);
-        console.log('Update incident of crackdown on hawala/hundi dealers:', formData.id, payload);
+      if (editingRecord && formData.id) {
+        // Update existing record
+        await api.put(`/ispec-hawala-hundi-incidents-crackdown-dealers/update-ispec-hawala-hundi-incidents-crackdown-dealer/${formData.id}`, payload);
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // await api.post('/hawala-hundi/add-crackdown-incident', payload);
-        console.log('Add incident of crackdown on hawala/hundi dealers:', payload);
+        // Add new record
+        await api.post('/ispec-hawala-hundi-incidents-crackdown-dealers/add-ispec-hawala-hundi-incidents-crackdown-dealer', payload);
       }
 
       await fetchRecords();
@@ -237,10 +218,8 @@ const IncidentsOfCrackdownHawalaHundi: React.FC<IncidentsOfCrackdownHawalaHundiP
     setDeleting(true);
 
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/hawala-hundi/delete-crackdown-incident/${id}`);
-      console.log('Delete incident of crackdown on hawala/hundi dealers:', id);
-
+      await api.delete(`/ispec-hawala-hundi-incidents-crackdown-dealers/delete-ispec-hawala-hundi-incidents-crackdown-dealer/${id}`);
+      
       await fetchRecords();
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
@@ -447,26 +426,31 @@ const IncidentsOfCrackdownHawalaHundi: React.FC<IncidentsOfCrackdownHawalaHundiP
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleView(record)}
-                          className="text-muted-foreground hover:text-foreground"
+                          className="h-8 w-8 p-0"
+                          title="View"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="secondary"
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(record)}
+                          className="h-8 w-8 p-0"
+                          title="Edit"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="destructive"
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(record)}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                          title="Delete"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

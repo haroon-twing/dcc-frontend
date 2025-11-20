@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Eye, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Edit, Trash2 } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Eye, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/UI/Table';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/UI/card';
 import { Button } from '../components/UI/Button';
@@ -35,6 +35,14 @@ const buildInitialForm = (): HawalaHundiFormState => ({
 });
 
 const HawalaHundi: React.FC = () => {
+  const location = useLocation();
+  const [activeTab, setActiveTab] = React.useState('major-dealers');
+
+  React.useEffect(() => {
+    if (location.state?.tab) {
+      setActiveTab(location.state.tab);
+    }
+  }, [location.state]);
   const navigate = useNavigate();
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState<HawalaHundiFormState>(buildInitialForm());
@@ -46,6 +54,7 @@ const HawalaHundi: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
+  const [viewLoading, setViewLoading] = useState<boolean>(false);
 
   // Search, Sort, and Pagination states
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -58,10 +67,21 @@ const HawalaHundi: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // TODO: Replace with actual API endpoint when available
-        // const response = await publicApi.get('/get-all-hawala-hundi');
-        // For now, using empty array
-        setRecords([]);
+        const response = await publicApi.get('/ispec-hawala-hundi/get-all-ispec-hawala-hundi');
+        const data = response.data?.data || [];
+        
+        const formattedRecords = data.map((item: any) => ({
+          id: item._id || item.id,
+          is_db_dealer_formed: item.is_db_dealer_formed || false,
+          no_dealers_convicted: item.no_dealers_convicted || 0,
+          no_dealers_freebycourt: item.no_dealers_freebycourt || 0,
+          no_delaers_cases_pending: item.no_delaers_cases_pending || 0,
+          is_mthly_review_prep: item.is_mthly_review_prep || false,
+          per_change_inflow: item.per_change_inflow || 0,
+          is_active: item.is_active !== undefined ? item.is_active : true,
+        }));
+        
+        setRecords(formattedRecords);
       } catch (error) {
         console.error('Error fetching hawala hundi records:', error);
         setRecords([]);
@@ -88,15 +108,29 @@ const HawalaHundi: React.FC = () => {
         is_active: formData.is_active,
       };
 
-      let response;
       if (editingId) {
-        // TODO: Replace with actual API endpoint when available
-        // response = await api.put(`/update-hawala-hundi/${editingId}`, payload);
-        console.log('Update hawala hundi:', editingId, payload);
+        // Update existing record
+        const response = await api.put(`/ispec-hawala-hundi/update-ispec-hawala-hundi/${editingId}`, payload);
+        const updatedRecord = response.data.data;
+        
+        // Update the records list with the updated record
+        setRecords(prev => 
+          prev.map(record => 
+            record.id === editingId 
+              ? { ...updatedRecord, id: updatedRecord._id || updatedRecord.id }
+              : record
+          )
+        );
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // response = await api.post('/add-hawala-hundi', payload);
-        console.log('Add hawala hundi:', payload);
+        // Add new record
+        const response = await api.post('/ispec-hawala-hundi/add-ispec-hawala-hundi', payload);
+        const newRecord = response.data.data;
+        
+        // Add the new record to the list
+        setRecords(prev => [
+          { ...newRecord, id: newRecord._id || newRecord.id },
+          ...prev
+        ]);
       }
 
       // TODO: Refresh the list after successful submission
@@ -143,19 +177,37 @@ const HawalaHundi: React.FC = () => {
   };
 
   const openViewModal = (record: HawalaHundiRecord) => {
-    setViewingId(record.id);
-    setEditingId(null);
-    setFormData({
-      id: record.id,
-      is_db_dealer_formed: record.is_db_dealer_formed,
-      no_dealers_convicted: record.no_dealers_convicted,
-      no_dealers_freebycourt: record.no_dealers_freebycourt,
-      no_delaers_cases_pending: record.no_delaers_cases_pending,
-      is_mthly_review_prep: record.is_mthly_review_prep,
-      per_change_inflow: record.per_change_inflow,
-      is_active: record.is_active,
-    });
-    setShowAddModal(true);
+    navigate(`/illegal-spectrum/hawala-hundi/details?id=${record.id}`);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTargetId) return;
+    
+    setDeleting(true);
+    try {
+      // Call delete API
+      await api.delete(`/ispec-hawala-hundi/delete-ispec-hawala-hundi/${deleteTargetId}`);
+      
+      // Remove the deleted record from the list
+      setRecords(prev => prev.filter(record => record.id !== deleteTargetId));
+      
+      // Close the delete confirmation modal
+      setDeleteTargetId(null);
+      setDeleteTargetName(null);
+      
+      // Show success message or toast
+      // You can add a toast notification here if needed
+    } catch (error: any) {
+      console.error('Error deleting hawala hundi record:', error);
+      // Show error message to the user
+      alert(
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to delete the record. Please try again.'
+      );
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleDeleteSubmit = async (id: string | number) => {
@@ -391,29 +443,34 @@ const HawalaHundi: React.FC = () => {
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => openViewModal(record)}
-                          className="text-muted-foreground hover:text-foreground"
+                          className="h-8 w-8 p-0"
+                          title="View"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="secondary"
+                          variant="ghost"
                           size="sm"
                           onClick={() => openEditModal(record)}
+                          className="h-8 w-8 p-0"
+                          title="Edit"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="destructive"
+                          variant="ghost"
                           size="sm"
                           onClick={() => {
                             setDeleteTargetId(record.id);
                             setDeleteTargetName(`Hawala/ Hundi Record ${record.id}`);
                           }}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                          title="Delete"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -481,7 +538,7 @@ const HawalaHundi: React.FC = () => {
       </Card>
 
       {/* Tabs Section */}
-      <Tabs defaultValue="major-dealers" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="major-dealers">Major Hawala/ Hundi Dealers in the Region</TabsTrigger>
           <TabsTrigger value="crackdown-incidents">Incidents of Crackdown on Hawala/ Hundi Dealers</TabsTrigger>
@@ -497,11 +554,13 @@ const HawalaHundi: React.FC = () => {
       <HawalaHundiFormModal
         open={showAddModal}
         onOpenChange={(open) => {
-          if (!open && !submitting) {
-            setShowAddModal(false);
-            setFormData(buildInitialForm());
-            setEditingId(null);
-            setViewingId(null);
+          if (!viewLoading) { // Prevent closing while loading
+            setShowAddModal(open);
+            if (!open) {
+              setFormData(buildInitialForm());
+              setEditingId(null);
+              setViewingId(null);
+            }
           }
         }}
         formData={formData}
@@ -509,7 +568,7 @@ const HawalaHundi: React.FC = () => {
         onSubmit={handleSubmit}
         title={modalTitle}
         submitLabel={submitLabel}
-        submitting={submitting}
+        submitting={submitting || viewLoading}
         viewMode={!!viewingId}
       />
 
