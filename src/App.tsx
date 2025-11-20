@@ -56,6 +56,11 @@ const IllegalSpectrumDashboardPage = React.lazy(() => import('./pages/IllegalSpe
 const ExtortionPage = React.lazy(() => import('./pages/Extortion'));
 const ExtortionDetailsPage = React.lazy(() => import('./pages/ExtortionDetails'));
 const ArmsExplosivesUreaPage = React.lazy(() => import('./pages/ArmsExplosivesUrea'));
+const IllegalSimsPage = React.lazy(() => import('./pages/IllegalSims'));
+const IllegalWarehousesPage = React.lazy(() => import('./pages/IllegalWarehouses'));
+const NCPVehiclesPage = React.lazy(() => import('./pages/NCPVehicles'));
+const HumanTraffickingPage = React.lazy(() => import('./pages/HumanTrafficking'));
+const SmugglingPage = React.lazy(() => import('./pages/Smuggling'));
 const HawalaHundiPage = React.lazy(() => import('./pages/HawalaHundi'));
 const BlackMarketDronesPage = React.lazy(() => import('./pages/BlackMarketDrones'));
 
@@ -367,6 +372,41 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <ArmsExplosivesUreaPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/illegal-sims" element={
+            <ProtectedRoute>
+              <Layout>
+                <IllegalSimsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/illegal-warehouses" element={
+            <ProtectedRoute>
+              <Layout>
+                <IllegalWarehousesPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/ncp-vehicles" element={
+            <ProtectedRoute>
+              <Layout>
+                <NCPVehiclesPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/human-trafficking" element={
+            <ProtectedRoute>
+              <Layout>
+                <HumanTraffickingPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/smuggling" element={
+            <ProtectedRoute>
+              <Layout>
+                <SmugglingPage />
               </Layout>
             </ProtectedRoute>
           } />
