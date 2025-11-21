@@ -178,7 +178,7 @@ const HumanTrafficking: React.FC = () => {
       window.alert('Record ID is required to view details');
       return;
     }
-    navigate(`/illegal-spectrum/human-trafficking/details?id=${recordId}`);
+    navigate(`/illegal-spectrum/human-trafficking/details/${recordId}`);
   };
 
   const handleDeleteSubmit = async (id: string | number) => {

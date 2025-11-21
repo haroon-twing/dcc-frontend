@@ -27,6 +27,7 @@ const HumanTraffickingDetails: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('Fetching human trafficking details for ID:', recordId);
     const fetchDetails = async () => {
       if (!recordId) {
         setError('No record ID provided');
@@ -35,6 +36,7 @@ const HumanTraffickingDetails: React.FC = () => {
       }
 
       try {
+        console.log('Fetching human trafficking details for ID:', recordId);
         setLoading(true);
         setError(null);
         const response = await publicApi.get(`/ispec-human-traff/get-single-ispec-human-traff/${recordId}`);
