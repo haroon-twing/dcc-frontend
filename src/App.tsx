@@ -5,6 +5,8 @@ import { CommunicationProvider } from './contexts/CommunicationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Layout from './components/Layout';
 import './App.css';
+import IllegalWarehousesView from './pages/IllegalWarehousesView';
+import ActionsTakenAgainstIllegalWarehousesView from './pages/ActionsTakenAgainstIllegalWarehousesView';
 
 const LoginPage = React.lazy(() => import('./pages/Login'));
 const RegisterPage = React.lazy(() => import('./pages/Register'));
@@ -64,7 +66,13 @@ const IllegalSimsPage = React.lazy(() => import('./pages/IllegalSims'));
 const IllegalSimsDetailsPage = React.lazy(() => import('./pages/IllegalSimsDetails'));
 const PrevalenceOfOutOfZoneSimsDetailsPage = React.lazy(() => import('./pages/PrevalenceOfOutOfZoneSimsDetails'));
 const IllegalWarehousesPage = React.lazy(() => import('./pages/IllegalWarehouses'));
+const IllegalWarehousesViewPage = React.lazy(() => import('./pages/IllegalWarehousesView'));
+const ActionsTakenAgainstIllegalWarehousesViewPage = React.lazy (() => import('./pages/ActionsTakenAgainstIllegalWarehousesView'));
 const NCPVehiclesPage = React.lazy(() => import('./pages/NCPVehicles'));
+const NCPVehiclesViewPage = React.lazy(() => import('./pages/NCPVehiclesView'));
+const NCPVehiclesDatabaseViewPage = React.lazy(() => import('./pages/NCPVehicleDatabaseView'));
+
+
 // const NCPVehiclesView = React.lazy(() => import('./pages/NCPVehiclesView'));
 
 // const NCPVehicleDatabaseView = React.lazy(() => import('./pages/NCPVehicleDatabaseView'));
@@ -73,7 +81,10 @@ const NCPVehiclesPage = React.lazy(() => import('./pages/NCPVehicles'));
 
 // const NCPStatusByDistrictView = React.lazy(() => import('./pages/NCPStatusByDistrictView'));
 const HumanTraffickingPage = React.lazy(() => import('./pages/HumanTrafficking'));
-// const HumanTraffickingDetailsPage = React.lazy(() => import('./pages/HumanTraffickingDetails'));
+const NCPStatusByDistrictViewPage = React.lazy(() => import('./pages/NCPStatusByDistrictView'));
+const NCPVehiclesRecoveryViewPage = React.lazy(() => import('./pages/NCPVehicleRecoveryView'));
+const MajorModesAndMotivationsViewPage = React.lazy(() => import('./pages/MajorModesAndMotivationsView'));
+const HumanTraffickingDetailsPage = React.lazy(() => import('./pages/HumanTraffickingDetails'));
 
 // const ActionsTakenAgainstIllegalWarehousesView = React.lazy(() => import('./pages/ActionsTakenAgainstIllegalWarehousesView'));
 
@@ -474,10 +485,38 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
+          <Route path="/illegal-spectrum/illegal-warehouses/View/:id" element={
+            <ProtectedRoute>
+              <Layout>
+                <IllegalWarehousesView/>
+              </Layout>
+            </ProtectedRoute>
+          } />
+           <Route path="/illegal-spectrum/actions-taken-against-illegal-warehouses/view/:id" element={
+            <ProtectedRoute>
+              <Layout>
+                <ActionsTakenAgainstIllegalWarehousesView/>
+              </Layout>
+            </ProtectedRoute>
+          } />
           <Route path="/illegal-spectrum/ncp-vehicles" element={
             <ProtectedRoute>
               <Layout>
                 <NCPVehiclesPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/ncp-vehicles/view/:id" element={
+            <ProtectedRoute>
+              <Layout>
+                <NCPVehiclesViewPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/ncp-vehicles-database/view/:id" element={
+            <ProtectedRoute>
+              <Layout>
+                <NCPVehiclesDatabaseViewPage />
               </Layout>
             </ProtectedRoute>
           } />
@@ -488,6 +527,50 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
+         
+          <Route path="/illegal-spectrum/human-trafficking/details/:id" element={
+            <ProtectedRoute>
+              <Layout>
+                <HumanTraffickingDetailsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          
+          {/* NCP Status By District View */}
+          <Route 
+            path="/illegal-spectrum/ncp-status-by-district/view/:id" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <NCPStatusByDistrictViewPage />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* NCP Vehicles Recovery View */}
+          <Route 
+            path="/illegal-spectrum/ncp-vehicles-recovery/view/:id" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <NCPVehiclesRecoveryViewPage />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* Major Modes and Motivations View */}
+          <Route 
+            path="/illegal-spectrum/major-modes-view/:id" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MajorModesAndMotivationsViewPage />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
           
           <Route path="/illegal-spectrum/smuggling" element={
             <ProtectedRoute>

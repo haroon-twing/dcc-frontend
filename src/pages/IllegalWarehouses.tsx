@@ -149,7 +149,7 @@ const IllegalWarehouses: React.FC = () => {
   };
 
   const openViewModal = (record: IllegalWarehousesRecord) => {
-    navigate(`/illegal-warehouses/view/${record.id}`);
+    navigate(`/illegal-spectrum/illegal-warehouses/view/${record.id}`);
   };
 
   const handleDeleteSubmit = async (id: string | number) => {
