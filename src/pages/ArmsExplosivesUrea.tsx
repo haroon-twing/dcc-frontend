@@ -453,35 +453,35 @@ const ArmsExplosivesUrea: React.FC = () => {
                       </TableCell>
                       <TableCell className="text-center">{record.no_int_reports_shared_lea}</TableCell>
                       <TableCell className="text-center">{record.no_letter_recvd_in_fdbk}</TableCell>
-                      <TableCell className="sticky right-0 bg-background group-hover:bg-muted/50">
-                        <div className="flex items-center justify-end gap-0.5">
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                            size="sm"
                             onClick={() => openViewModal(record)}
-                            title="View details"
+                            className="h-8 w-8 p-0"
+                            title="View"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                            size="sm"
                             onClick={() => openEditModal(record)}
-                            title="Edit record"
+                            className="h-8 w-8 p-0"
+                            title="Edit"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                            size="sm"
                             onClick={() => {
                               setDeleteTargetId(record.id);
                               setDeleteTargetName(`Arms / Explosives and Illegal Urea Record ${record.id}`);
                             }}
-                            title="Delete record"
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                            title="Delete"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

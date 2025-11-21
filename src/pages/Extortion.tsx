@@ -525,37 +525,37 @@ const Extortion: React.FC = () => {
                     <TableCell>{getDisplayValue(record, 'no_ext_appreh_multiagency_effort')}</TableCell>
                     <TableCell>{getDisplayValue(record, 'no_ext_appreh_via_multiagency_convicted')}</TableCell>
                     <TableCell>{getDisplayValue(record, 'no_ext_appreh_via_multiagency_case_pending')}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="sm"
                           onClick={() => openViewModal(record.id)}
-                          className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                          className="h-8 w-8 p-0"
+                          title="View"
                         >
                           <Eye className="h-4 w-4" />
-                          <span className="sr-only">View</span>
                         </Button>
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="sm"
                           onClick={() => openEditModal(record)}
-                          className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                          className="h-8 w-8 p-0"
+                          title="Edit"
                         >
                           <Edit className="h-4 w-4" />
-                          <span className="sr-only">Edit</span>
                         </Button>
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="sm"
                           onClick={() => {
                             setDeleteTargetId(record.id);
                             setDeleteTargetName(`Extortion Record ${record.id}`);
                           }}
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                          title="Delete"
                         >
                           <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">Delete</span>
                         </Button>
                       </div>
                     </TableCell>

@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../UI/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../UI/Table';
 import { Button } from '../UI/Button';
-import { Eye, Edit, Trash2, Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, Pencil, Trash2, Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { publicApi } from '../../lib/api';
 import api from '../../lib/api';
 import ActionAgainstIllegalVendorFormModal from '../modals/illegalspectrum/ActionAgainstIllegalVendorFormModal';
@@ -41,6 +42,7 @@ const ActionAgainstIllegalVendors: React.FC<ActionAgainstIllegalVendorsProps> = 
   const [recordToDeleteId, setRecordToDeleteId] = useState<string | number | undefined>(undefined);
   const [recordToDeleteName, setRecordToDeleteName] = useState<string>('');
   const [deleting, setDeleting] = useState<boolean>(false);
+  const navigate = useNavigate();
   
   // Search, Sort, and Pagination states
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -62,15 +64,8 @@ const ActionAgainstIllegalVendors: React.FC<ActionAgainstIllegalVendorsProps> = 
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      // const endpoint = blackMarketDronesId
-      //   ? `/black-market-drones/get-all-actions-against-vendors/${blackMarketDronesId}`
-      //   : '/black-market-drones/get-all-actions-against-vendors';
-      // const response = await publicApi.get(endpoint);
-      // const data = response.data?.data || response.data || [];
-      
-      // For now, using empty array
-      const data: any[] = [];
+      const response = await publicApi.get('/ispec-blackmarket-action-illegal-vendors/get-all-ispec-blackmarket-action-illegal-vendors');
+      const data = response.data?.data || response.data || [];
       
       const records: ActionAgainstIllegalVendor[] = data.map((item: any) => ({
         _id: item._id || item.id,
@@ -102,23 +97,25 @@ const ActionAgainstIllegalVendors: React.FC<ActionAgainstIllegalVendorsProps> = 
     setShowModal(true);
   };
 
-  const handleView = async (record: ActionAgainstIllegalVendor) => {
+  const handleView = (record: ActionAgainstIllegalVendor) => {
     const recordId = record._id || record.id;
-    if (!recordId) {
-      return;
+    if (recordId) {
+      navigate(`/illegal-spectrum/action-against-illegal-vendors/details?id=${recordId}`);
+    } else {
+      console.error('No record ID found for viewing');
+      // Fallback to modal if no ID is available
+      setViewingRecord(record);
+      setEditingRecord(null);
+      setIsViewMode(true);
+      setFormData({
+        id: recordId,
+        lea: record.lea,
+        ill_vend_apprehended: record.ill_vend_apprehended,
+        ill_vend_fined: record.ill_vend_fined,
+        remarks: record.remarks,
+      });
+      setShowModal(true);
     }
-
-    setViewingRecord(record);
-    setEditingRecord(null);
-    setIsViewMode(true);
-    setFormData({
-      id: recordId,
-      lea: record.lea,
-      ill_vend_apprehended: record.ill_vend_apprehended,
-      ill_vend_fined: record.ill_vend_fined,
-      remarks: record.remarks,
-    });
-    setShowModal(true);
   };
 
   const handleEdit = (record: ActionAgainstIllegalVendor) => {
@@ -145,64 +142,92 @@ const ActionAgainstIllegalVendors: React.FC<ActionAgainstIllegalVendorsProps> = 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
+    if (submitting) return;
 
     try {
+      setSubmitting(true);
+      
       const payload = {
         lea: formData.lea,
         ill_vend_apprehended: formData.ill_vend_apprehended,
         ill_vend_fined: formData.ill_vend_fined,
         remarks: formData.remarks,
-        ...(blackMarketDronesId && { black_market_drones_id: blackMarketDronesId }),
       };
-
-      if (editingRecord) {
-        // TODO: Replace with actual API endpoint when available
-        // await api.put(`/black-market-drones/update-action-against-vendor/${formData.id}`, payload);
-        console.log('Update action against illegal vendor:', formData.id, payload);
+      
+      console.log('Submitting form with data:', { editingRecord, payload });
+      
+      if (editingRecord && editingRecord.id) {
+        // Update existing record
+        console.log('Updating record with ID:', editingRecord.id);
+        try {
+          const response = await api.put(
+            `/ispec-blackmarket-action-illegal-vendors/update-ispec-blackmarket-action-illegal-vendors/${editingRecord.id}`, 
+            payload
+          );
+          console.log('Update API response:', response.data);
+        } catch (updateError) {
+          console.error('Update API error:', updateError);
+          throw updateError;
+        }
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // await api.post('/black-market-drones/add-action-against-vendor', payload);
-        console.log('Add action against illegal vendor:', payload);
+        // Create new record
+        console.log('Creating new record');
+        try {
+          const response = await api.post(
+            '/ispec-blackmarket-action-illegal-vendors/add-ispec-blackmarket-action-illegal-vendors', 
+            payload
+          );
+          console.log('Create API response:', response.data);
+        } catch (createError) {
+          console.error('Create API error:', createError);
+          throw createError;
+        }
       }
-
+      
+      // Refresh the data after successful operation
       await fetchRecords();
+      
       setShowModal(false);
       setFormData(buildInitialForm());
       setEditingRecord(null);
-      setViewingRecord(null);
-      setIsViewMode(false);
-    } catch (error: any) {
-      console.error('Error submitting action against illegal vendor:', error);
-      alert(
-        error?.response?.data?.message ||
-        error?.message ||
-        `Failed to ${editingRecord ? 'update' : 'add'} action against illegal vendor. Please try again.`
-      );
+    } catch (err: any) {
+      console.error('Error in handleSubmit:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        config: {
+          url: err.config?.url,
+          method: err.config?.method,
+          data: err.config?.data,
+        },
+      });
+      
+      const errorMessage = err.response?.data?.message || 
+                         err.message || 
+                         'Failed to save record. Please check the console for more details.';
+      alert(errorMessage);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDeleteSubmit = async (id: string | number) => {
-    setDeleting(true);
-
+  const handleDeleteSubmit = async () => {
+    if (!recordToDeleteId || deleting) return;
+    
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/black-market-drones/delete-action-against-vendor/${id}`);
-      console.log('Delete action against illegal vendor:', id);
-
+      setDeleting(true);
+      
+      await api.delete(`/ispec-blackmarket-action-illegal-vendors/delete-ispec-blackmarket-action-illegal-vendors/${recordToDeleteId}`);
+      
+      // Refresh the data after successful deletion
       await fetchRecords();
+      
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
       setRecordToDeleteName('');
-    } catch (error: any) {
-      console.error('Error deleting action against illegal vendor:', error);
-      alert(
-        error?.response?.data?.message ||
-        error?.message ||
-        'Failed to delete action against illegal vendor. Please try again.'
-      );
+    } catch (err: any) {
+      console.error('Error deleting action against illegal vendor:', err);
+      alert(err?.response?.data?.message || 'Failed to delete record. Please try again.');
     } finally {
       setDeleting(false);
     }
@@ -359,27 +384,32 @@ const ActionAgainstIllegalVendors: React.FC<ActionAgainstIllegalVendorsProps> = 
                     <TableCell>{record.lea}</TableCell>
                     <TableCell>{record.ill_vend_apprehended}</TableCell>
                     <TableCell>{record.ill_vend_fined}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleView(record)}
-                          className="text-muted-foreground hover:text-foreground"
+                          className="h-8 w-8 p-0"
+                          title="View"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="secondary"
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(record)}
+                          className="h-8 w-8 p-0"
+                          title="Edit"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="destructive"
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(record)}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                          title="Delete"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

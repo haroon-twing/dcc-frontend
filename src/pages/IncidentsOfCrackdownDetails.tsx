@@ -204,18 +204,13 @@ const IncidentsOfCrackdownDetails: React.FC = () => {
             </CardTitle>
             <CardDescription>Comprehensive information about the crackdown</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Location</p>
-              <p className="text-base text-foreground font-medium">{incidentData.location || 'N/A'}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Date & Time</p>
-              <p className="text-base text-foreground font-medium">{formatDate(incidentData.date)}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">People Apprehended</p>
-              <p className="text-base text-foreground font-medium">{incidentData.no_people_apprehend}</p>
+          <CardContent>
+            <div className="prose prose-sm max-w-none">
+              {incidentData.details ? (
+                <p className="whitespace-pre-line">{incidentData.details}</p>
+              ) : (
+                <p className="text-muted-foreground italic">No details provided</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -240,27 +235,8 @@ const IncidentsOfCrackdownDetails: React.FC = () => {
         </Card>
       </div>
 
-      {/* Details and Remarks */}
+      {/* Remarks Section */}
       <div className="grid gap-6">
-        {/* Incident Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Incident Narrative
-            </CardTitle>
-            <CardDescription>Detailed account of the incident</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="prose prose-sm max-w-none">
-              {incidentData.details ? (
-                <p className="whitespace-pre-line">{incidentData.details}</p>
-              ) : (
-                <p className="text-muted-foreground italic">No details provided</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Remarks */}
         {incidentData.remarks && (

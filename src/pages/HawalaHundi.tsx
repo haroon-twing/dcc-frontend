@@ -180,16 +180,16 @@ const HawalaHundi: React.FC = () => {
     navigate(`/illegal-spectrum/hawala-hundi/details?id=${record.id}`);
   };
 
-  const handleDelete = async () => {
-    if (!deleteTargetId) return;
+  const handleDeleteSubmit = async (id: string | number) => {
+    if (!id) return;
     
     setDeleting(true);
     try {
       // Call delete API
-      await api.delete(`/ispec-hawala-hundi/delete-ispec-hawala-hundi/${deleteTargetId}`);
+      await api.delete(`/ispec-hawala-hundi/delete-ispec-hawala-hundi/${id}`);
       
       // Remove the deleted record from the list
-      setRecords(prev => prev.filter(record => record.id !== deleteTargetId));
+      setRecords(prev => prev.filter(record => record.id !== id));
       
       // Close the delete confirmation modal
       setDeleteTargetId(null);
@@ -204,33 +204,6 @@ const HawalaHundi: React.FC = () => {
         error?.response?.data?.message ||
         error?.message ||
         'Failed to delete the record. Please try again.'
-      );
-    } finally {
-      setDeleting(false);
-    }
-  };
-
-  const handleDeleteSubmit = async (id: string | number) => {
-    setDeleting(true);
-
-    try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/delete-hawala-hundi/${id}`);
-      console.log('Delete hawala hundi:', id);
-
-      // TODO: Refresh the list after successful deletion
-      // const recordsResponse = await publicApi.get('/get-all-hawala-hundi');
-      // Process and set records
-
-      // Close modal
-      setDeleteTargetId(null);
-      setDeleteTargetName(null);
-    } catch (error: any) {
-      console.error('Error deleting hawala hundi record:', error);
-      alert(
-        error?.response?.data?.message ||
-        error?.message ||
-        'Failed to delete hawala hundi record. Please try again.'
       );
     } finally {
       setDeleting(false);
@@ -393,28 +366,19 @@ const HawalaHundi: React.FC = () => {
                     {getSortIcon('per_change_inflow')}
                   </button>
                 </TableHead>
-                <TableHead>
-                  <button
-                    onClick={() => handleSort('is_active')}
-                    className="flex items-center hover:text-foreground transition-colors"
-                  >
-                    Active
-                    {getSortIcon('is_active')}
-                  </button>
-                </TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="py-6 text-center text-muted-foreground">
                     Loading hawala hundi records...
                   </TableCell>
                 </TableRow>
               ) : filteredAndSortedRecords.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="py-6 text-center text-muted-foreground">
                     {searchTerm ? 'No records found matching your search.' : 'No hawala hundi records found.'}
                   </TableCell>
                 </TableRow>
@@ -433,15 +397,6 @@ const HawalaHundi: React.FC = () => {
                     <TableCell>{record.no_dealers_convicted}</TableCell>
                     <TableCell>{record.no_delaers_cases_pending}</TableCell>
                     <TableCell>{record.per_change_inflow.toFixed(1)}%</TableCell>
-                    <TableCell>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        record.is_active
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                          : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
-                      }`}>
-                        {getDisplayValue(record.is_active)}
-                      </span>
-                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Button
@@ -581,7 +536,7 @@ const HawalaHundi: React.FC = () => {
           }
         }}
         id={deleteTargetId}
-        message={`Are you sure you want to delete "${deleteTargetName}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete this record? This action cannot be undone.`}
         onSubmit={handleDeleteSubmit}
         deleting={deleting}
         title="Delete Hawala/ Hundi Record"

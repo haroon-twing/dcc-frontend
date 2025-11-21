@@ -61,6 +61,8 @@ const ExtortionDetailsPage = React.lazy(() => import('./pages/ExtortionDetails')
 const MajorExtortionistDetailsPage = React.lazy(() => import('./pages/MajorExtortionistDetails'));
 const ArmsExplosivesUreaPage = React.lazy(() => import('./pages/ArmsExplosivesUrea'));
 const IllegalSimsPage = React.lazy(() => import('./pages/IllegalSims'));
+const IllegalSimsDetailsPage = React.lazy(() => import('./pages/IllegalSimsDetails'));
+const PrevalenceOfOutOfZoneSimsDetailsPage = React.lazy(() => import('./pages/PrevalenceOfOutOfZoneSimsDetails'));
 const IllegalWarehousesPage = React.lazy(() => import('./pages/IllegalWarehouses'));
 const NCPVehiclesPage = React.lazy(() => import('./pages/NCPVehicles'));
 const HumanTraffickingPage = React.lazy(() => import('./pages/HumanTrafficking'));
@@ -70,8 +72,11 @@ const HawalaHundiDetailsPage = React.lazy(() => import('./pages/HawalaHundiDetai
 const MajorHawalaHundiDealerDetailsPage = React.lazy(() => import('./pages/MajorHawalaHundiDealerDetails'));
 const HawalaHundiIncidentsDetailsPage = React.lazy(() => import('./pages/HawalaHundiIncidentsDetails'));
 const BlackMarketDronesPage = React.lazy(() => import('./pages/BlackMarketDrones'));
+const BlackMarketDronesDetailsPage = React.lazy(() => import('./pages/BlackMarketDronesDetails'));
+const ActionAgainstIllegalVendorsDetails = React.lazy(() => import('./pages/ActionAgainstIllegalVendorsDetails'));
 const PolicyAndLegislativeAmendmentDetails = React.lazy(() => import('./pages/PolicyAndLegislativeAmendmentDetails'));
 const IncidentsOfCrackdownDetails = React.lazy(() => import('./pages/IncidentsOfCrackdownDetails'));
+const MajorBlackMarketVendorDetails = React.lazy(() => import('./pages/MajorBlackMarketVendorDetails'));
 
 function App() {
   return (
@@ -433,6 +438,20 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
+          <Route path="/illegal-spectrum/illegal-sims/details" element={
+            <ProtectedRoute>
+              <Layout>
+                <IllegalSimsDetailsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/illegal-sims/prevalence-out-zone-sims/:id" element={
+            <ProtectedRoute>
+              <Layout>
+                <PrevalenceOfOutOfZoneSimsDetailsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
           <Route path="/illegal-spectrum/illegal-warehouses" element={
             <ProtectedRoute>
               <Layout>
@@ -493,6 +512,27 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <BlackMarketDronesPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/black-market-drones/details" element={
+            <ProtectedRoute>
+              <Layout>
+                <BlackMarketDronesDetailsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/black-market-drones/vendors/details" element={
+            <ProtectedRoute>
+              <Layout>
+                <MajorBlackMarketVendorDetails />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/action-against-illegal-vendors/details" element={
+            <ProtectedRoute>
+              <Layout>
+                <ActionAgainstIllegalVendorsDetails />
               </Layout>
             </ProtectedRoute>
           } />

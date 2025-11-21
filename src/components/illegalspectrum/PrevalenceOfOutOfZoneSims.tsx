@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../UI/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../UI/Table';
 import { Button } from '../UI/Button';
@@ -65,15 +66,10 @@ const PrevalenceOfOutOfZoneSims: React.FC<PrevalenceOfOutOfZoneSimsProps> = ({ i
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      // const endpoint = illegalSimsId
-      //   ? `/illegal-sims/get-all-prevalence-out-zone-sims/${illegalSimsId}`
-      //   : '/illegal-sims/get-all-prevalence-out-zone-sims';
-      // const response = await publicApi.get(endpoint);
-      // const data = response.data?.data || response.data || [];
-      
-      // For now, using empty array
-      const data: any[] = [];
+      const response = await publicApi.get('/ispec-illegal-sims-prevalance-outzone-sims/get-all-ispec-illegal-sims-prevalance-outzone-sims');
+      // Handle both array and object responses
+      const responseData = response.data?.data || response.data;
+      const data = Array.isArray(responseData) ? responseData : [responseData].filter(Boolean);
       
       const records: PrevalenceOfOutOfZoneSims[] = data.map((item: any) => ({
         _id: item._id || item.id,
@@ -106,24 +102,19 @@ const PrevalenceOfOutOfZoneSims: React.FC<PrevalenceOfOutOfZoneSimsProps> = ({ i
     setShowModal(true);
   };
 
-  const handleView = async (record: PrevalenceOfOutOfZoneSims) => {
-    const recordId = record._id || record.id;
-    if (!recordId) {
-      return;
-    }
+  const navigate = useNavigate();
 
-    setViewingRecord(record);
-    setEditingRecord(null);
-    setIsViewMode(true);
-    setFormData({
-      id: recordId,
-      distid: record.distid,
-      per_population_using_sims: record.per_population_using_sims,
-      per_outzone_sims_used_total: record.per_outzone_sims_used_total,
-      per_afghan_sims_used_from_outzone_sims: record.per_afghan_sims_used_from_outzone_sims,
-      remarks: record.remarks,
-    });
-    setShowModal(true);
+  const handleView = (record: PrevalenceOfOutOfZoneSims) => {
+    console.log('View button clicked for record:', record);
+    const recordId = record._id || record.id;
+    console.log('Record ID to navigate with:', recordId);
+    if (recordId) {
+      const url = `/illegal-spectrum/illegal-sims/prevalence-out-zone-sims/${recordId}`;
+      console.log('Navigating to:', url);
+      navigate(url);
+    } else {
+      console.error('No record ID found in record:', record);
+    }
   };
 
   const handleEdit = (record: PrevalenceOfOutOfZoneSims) => {
@@ -164,13 +155,9 @@ const PrevalenceOfOutOfZoneSims: React.FC<PrevalenceOfOutOfZoneSimsProps> = ({ i
       };
 
       if (editingRecord) {
-        // TODO: Replace with actual API endpoint when available
-        // await api.put(`/illegal-sims/update-prevalence-out-zone-sims/${formData.id}`, payload);
-        console.log('Update prevalence of out of zone sims:', formData.id, payload);
+        await api.put(`/ispec-illegal-sims-prevalance-outzone-sims/update-ispec-illegal-sims-prevalance-outzone-sim/${formData.id}`, payload);
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // await api.post('/illegal-sims/add-prevalence-out-zone-sims', payload);
-        console.log('Add prevalence of out of zone sims:', payload);
+        await api.post('/ispec-illegal-sims-prevalance-outzone-sims/add-ispec-illegal-sims-prevalance-outzone-sim', payload);
       }
 
       await fetchRecords();
@@ -195,9 +182,7 @@ const PrevalenceOfOutOfZoneSims: React.FC<PrevalenceOfOutOfZoneSimsProps> = ({ i
     setDeleting(true);
 
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/illegal-sims/delete-prevalence-out-zone-sims/${id}`);
-      console.log('Delete prevalence of out of zone sims:', id);
+      await api.delete(`/ispec-illegal-sims-prevalance-outzone-sims/delete-ispec-illegal-sims-prevalance-outzone-sim/${id}`);
 
       await fetchRecords();
       setShowDeleteModal(false);
@@ -375,27 +360,32 @@ const PrevalenceOfOutOfZoneSims: React.FC<PrevalenceOfOutOfZoneSimsProps> = ({ i
                     <TableCell>{record.per_population_using_sims.toFixed(1)}%</TableCell>
                     <TableCell>{record.per_outzone_sims_used_total.toFixed(1)}%</TableCell>
                     <TableCell>{record.per_afghan_sims_used_from_outzone_sims.toFixed(1)}%</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleView(record)}
-                          className="text-muted-foreground hover:text-foreground"
+                          className="h-8 w-8 p-0"
+                          title="View"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="secondary"
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(record)}
+                          className="h-8 w-8 p-0"
+                          title="Edit"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="destructive"
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(record)}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                          title="Delete"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
