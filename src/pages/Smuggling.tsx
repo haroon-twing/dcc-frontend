@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Edit, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/UI/Table';
@@ -32,17 +32,17 @@ const buildInitialForm = (): SmugglingFormState => ({
 });
 
 const Smuggling: React.FC = () => {
-  const navigate = useNavigate();
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState<SmugglingFormState>(buildInitialForm());
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [viewingId, setViewingId] = useState<string | null>(null);
+  const navigate = useNavigate();
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [deleteTargetName, setDeleteTargetName] = useState<string | null>(null);
+
   const [records, setRecords] = useState<SmugglingRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Search, Sort, and Pagination states
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -51,25 +51,42 @@ const Smuggling: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        // TODO: Replace with actual API endpoint when available
-        // const response = await publicApi.get('/get-all-smuggling');
-        // For now, using empty array
-        setRecords([]);
-      } catch (error) {
-        console.error('Error fetching smuggling records:', error);
-        setRecords([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Helper: format raw API items into SmugglingRecord
+  const formatRecord = (item: any): SmugglingRecord => ({
+    id: (item._id ?? item.id ?? '').toString(),
+    is_db_formed: !!item.is_db_formed,
+    no_smug_apprehended: Number(item.no_smug_apprehended ?? 0),
+    no_smug_convicted: Number(item.no_smug_convicted ?? 0),
+    no_appr_smug_freebycourt: Number(item.no_appr_smug_freebycourt ?? 0),
+    no_appr_smug_casepending: Number(item.no_appr_smug_casepending ?? 0),
+    is_mthly_report_formed: !!item.is_mthly_report_formed,
+    remarks: item.remarks ?? '',
+  });
 
-    fetchData();
+  // Fetch records (used after any CRUD operation)
+  const fetchRecords = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await publicApi.get('/ispec-smuggling/get-all-ispec-smuggling');
+      // Response might be [] or { data: [] }, handle both
+      const raw = Array.isArray(response.data) ? response.data : response.data?.data ?? [];
+      const formatted = raw.map(formatRecord);
+      setRecords(formatted);
+    } catch (error) {
+      console.error('Error fetching smuggling records:', error);
+      // keep previous records but surface an alert
+      window.alert('Failed to load smuggling records. Please try again.');
+      setRecords([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    fetchRecords();
+  }, [fetchRecords]);
+
+  // Submit handler for Add/Edit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -85,47 +102,42 @@ const Smuggling: React.FC = () => {
         remarks: formData.remarks,
       };
 
-      let response;
-      if (editingId) {
-        // TODO: Replace with actual API endpoint when available
-        // response = await api.put(`/update-smuggling/${editingId}`, payload);
-        console.log('Update smuggling:', editingId, payload);
+      if (formData.id) {
+        await api.put(`/ispec-smuggling/update-ispec-smuggling/${formData.id}`, payload);
+        window.alert('Smuggling record updated successfully!');
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // response = await api.post('/add-smuggling', payload);
-        console.log('Add smuggling:', payload);
+        await api.post('/ispec-smuggling/add-ispec-smuggling', payload);
+        window.alert('Smuggling record added successfully!');
       }
 
-      // TODO: Refresh the list after successful submission
-      // const recordsResponse = await publicApi.get('/get-all-smuggling');
-      // Process and set records
+      // Refresh list
+      await fetchRecords();
 
-      // Close modal and reset form
+      // Reset modal & form state
       setShowAddModal(false);
       setFormData(buildInitialForm());
-      setEditingId(null);
     } catch (error: any) {
       console.error('Error submitting smuggling record:', error);
-      alert(
+      window.alert(
         error?.response?.data?.message ||
         error?.message ||
-        `Failed to ${editingId ? 'update' : 'add'} smuggling record. Please try again.`
+        `Failed to ${formData.id ? 'update' : 'add'} smuggling record. Please try again.`
       );
     } finally {
       setSubmitting(false);
     }
   };
 
+  // Open create modal
   const openCreateModal = () => {
-    setEditingId(null);
-    setViewingId(null);
     setFormData(buildInitialForm());
+    setEditingId(null);
     setShowAddModal(true);
   };
 
+  // Open edit modal
   const openEditModal = (record: SmugglingRecord) => {
     setEditingId(record.id);
-    setViewingId(null);
     setFormData({
       id: record.id,
       is_db_formed: record.is_db_formed,
@@ -134,45 +146,39 @@ const Smuggling: React.FC = () => {
       no_appr_smug_freebycourt: record.no_appr_smug_freebycourt,
       no_appr_smug_casepending: record.no_appr_smug_casepending,
       is_mthly_report_formed: record.is_mthly_report_formed,
-      remarks: record.remarks,
+      remarks: record.remarks ?? '',
     });
     setShowAddModal(true);
   };
 
-  const openViewModal = (record: SmugglingRecord) => {
-    setViewingId(record.id);
+  // View button click handler
+  const handleView = (record: SmugglingRecord) => {
+    navigate(`/illegal-spectrum/smuggling/view/${record.id}`);
+  };
+
+  // Close modal and reset form
+  const closeModal = () => {
+    setShowAddModal(false);
+    setFormData(buildInitialForm());
     setEditingId(null);
-    setFormData({
-      id: record.id,
-      is_db_formed: record.is_db_formed,
-      no_smug_apprehended: record.no_smug_apprehended,
-      no_smug_convicted: record.no_smug_convicted,
-      no_appr_smug_freebycourt: record.no_appr_smug_freebycourt,
-      no_appr_smug_casepending: record.no_appr_smug_casepending,
-      is_mthly_report_formed: record.is_mthly_report_formed,
-      remarks: record.remarks,
-    });
-    setShowAddModal(true);
   };
 
-  const handleDeleteSubmit = async (id: string | number) => {
+  // Delete handler (uses endpoint you provided)
+  const handleDeleteSubmit = async (id: string | number | null) => {
+    if (!id) return;
     setDeleting(true);
 
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/delete-smuggling/${id}`);
-      console.log('Delete smuggling:', id);
-
-      // TODO: Refresh the list after successful deletion
-      // const recordsResponse = await publicApi.get('/get-all-smuggling');
-      // Process and set records
-
-      // Close modal
+      await api.delete(`/ispec-smuggling/delete-ispec-smuggling/${id}`);
+      window.alert('Smuggling record deleted successfully!');
+      // refresh data
+      await fetchRecords();
+      // close delete modal
       setDeleteTargetId(null);
       setDeleteTargetName(null);
     } catch (error: any) {
       console.error('Error deleting smuggling record:', error);
-      alert(
+      window.alert(
         error?.response?.data?.message ||
         error?.message ||
         'Failed to delete smuggling record. Please try again.'
@@ -182,25 +188,29 @@ const Smuggling: React.FC = () => {
     }
   };
 
-  const modalTitle = viewingId
-    ? 'View Smuggling Record'
-    : editingId
-    ? 'Edit Smuggling Record'
-    : 'Add Smuggling Record';
-  const submitLabel = editingId ? 'Save Changes' : 'Add Smuggling Record';
+  const modalTitle = formData.id ? 'Edit Smuggling Record' : 'Add Smuggling Record';
+  const submitLabel = formData.id ? 'Save Changes' : 'Add Smuggling Record';
 
-  // Filter and sort data
+  // Filter and sort data (safe search access)
   const filteredAndSortedRecords = useMemo(() => {
     let filtered = records;
 
     // Apply search filter
-    if (searchTerm) {
+    if (searchTerm && searchTerm.trim().length > 0) {
       const searchLower = searchTerm.toLowerCase();
       filtered = records.filter((record) => {
+        const idStr = (record.id ?? '').toString().toLowerCase();
+        const remarksStr = (record.remarks ?? '').toString().toLowerCase();
+        const apprehendedStr = record.no_smug_apprehended?.toString() ?? '';
+        const convictedStr = record.no_smug_convicted?.toString() ?? '';
+        const casePendingStr = record.no_appr_smug_casepending?.toString() ?? '';
+
         return (
-          record.id.toLowerCase().includes(searchLower) ||
-          record.remarks.toLowerCase().includes(searchLower) ||
-          record.no_smug_apprehended.toString().includes(searchLower)
+          idStr.includes(searchLower) ||
+          remarksStr.includes(searchLower) ||
+          apprehendedStr.includes(searchLower) ||
+          convictedStr.includes(searchLower) ||
+          casePendingStr.includes(searchLower)
         );
       });
     }
@@ -211,19 +221,43 @@ const Smuggling: React.FC = () => {
         let aValue: any = (a as any)[sortColumn];
         let bValue: any = (b as any)[sortColumn];
 
+        // normalize undefined
+        if (aValue === undefined || aValue === null) aValue = '';
+        if (bValue === undefined || bValue === null) bValue = '';
+
         if (typeof aValue === 'boolean') {
           aValue = aValue ? 1 : 0;
           bValue = bValue ? 1 : 0;
         }
 
-        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+        // if numeric string compare as number
+        const aNum = Number(aValue);
+        const bNum = Number(bValue);
+        if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) {
+          if (aNum < bNum) return sortDirection === 'asc' ? -1 : 1;
+          if (aNum > bNum) return sortDirection === 'asc' ? 1 : -1;
+          return 0;
+        }
+
+        // fallback to string compare
+        const aStr = String(aValue).toLowerCase();
+        const bStr = String(bValue).toLowerCase();
+        if (aStr < bStr) return sortDirection === 'asc' ? -1 : 1;
+        if (aStr > bStr) return sortDirection === 'asc' ? 1 : -1;
         return 0;
       });
     }
 
     return filtered;
   }, [records, searchTerm, sortColumn, sortDirection]);
+
+  // Ensure currentPage is valid when filtered results change
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(filteredAndSortedRecords.length / itemsPerPage));
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [filteredAndSortedRecords, currentPage]);
 
   // Paginate data
   const paginatedRecords = useMemo(() => {
@@ -232,9 +266,9 @@ const Smuggling: React.FC = () => {
     return filteredAndSortedRecords.slice(startIndex, endIndex);
   }, [filteredAndSortedRecords, currentPage, itemsPerPage]);
 
-  const totalPages = Math.ceil(filteredAndSortedRecords.length / itemsPerPage);
+  const totalPages = Math.ceil(Math.max(0, filteredAndSortedRecords.length) / itemsPerPage);
 
-  // Handle sort click
+  // Sorting helpers
   const handleSort = (column: string) => {
     if (sortColumn === column) {
       if (sortDirection === 'asc') {
@@ -250,7 +284,6 @@ const Smuggling: React.FC = () => {
     setCurrentPage(1);
   };
 
-  // Get sort icon for column
   const getSortIcon = (column: string) => {
     if (sortColumn !== column) {
       return <ArrowUpDown className="h-4 w-4 ml-1 text-muted-foreground" />;
@@ -261,9 +294,7 @@ const Smuggling: React.FC = () => {
     return <ArrowDown className="h-4 w-4 ml-1 text-primary" />;
   };
 
-  const getDisplayValue = (value: boolean): string => {
-    return value ? 'Yes' : 'No';
-  };
+  const getDisplayValue = (value: boolean): string => (value ? 'Yes' : 'No');
 
   return (
     <div className="p-6 space-y-6">
@@ -352,13 +383,13 @@ const Smuggling: React.FC = () => {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow>
+                <TableRow key="loading">
                   <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
                     Loading smuggling records...
                   </TableCell>
                 </TableRow>
               ) : filteredAndSortedRecords.length === 0 ? (
-                <TableRow>
+                <TableRow key="no-records">
                   <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
                     {searchTerm ? 'No records found matching your search.' : 'No smuggling records found.'}
                   </TableCell>
@@ -367,11 +398,13 @@ const Smuggling: React.FC = () => {
                 paginatedRecords.map((record) => (
                   <TableRow key={record.id}>
                     <TableCell>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        record.is_db_formed
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                          : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
-                      }`}>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          record.is_db_formed
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                            : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
+                        }`}
+                      >
                         {getDisplayValue(record.is_db_formed)}
                       </span>
                     </TableCell>
@@ -379,11 +412,13 @@ const Smuggling: React.FC = () => {
                     <TableCell>{record.no_smug_convicted}</TableCell>
                     <TableCell>{record.no_appr_smug_casepending}</TableCell>
                     <TableCell>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        record.is_mthly_report_formed
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                          : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
-                      }`}>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          record.is_mthly_report_formed
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                            : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
+                        }`}
+                      >
                         {getDisplayValue(record.is_mthly_report_formed)}
                       </span>
                     </TableCell>
@@ -392,16 +427,12 @@ const Smuggling: React.FC = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => openViewModal(record)}
+                          onClick={() => handleView(record)}
                           className="text-muted-foreground hover:text-foreground"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => openEditModal(record)}
-                        >
+                        <Button variant="secondary" size="sm" onClick={() => openEditModal(record)}>
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
@@ -426,7 +457,8 @@ const Smuggling: React.FC = () => {
           {filteredAndSortedRecords.length > 0 && totalPages > 1 && (
             <div className="flex items-center justify-between mt-4 pt-4 border-t">
               <div className="text-sm text-muted-foreground">
-                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredAndSortedRecords.length)} of {filteredAndSortedRecords.length} entries
+                Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
+                {Math.min(currentPage * itemsPerPage, filteredAndSortedRecords.length)} of {filteredAndSortedRecords.length} entries
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -440,11 +472,7 @@ const Smuggling: React.FC = () => {
                 </Button>
                 <div className="flex items-center gap-1">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                    if (
-                      page === 1 ||
-                      page === totalPages ||
-                      (page >= currentPage - 1 && page <= currentPage + 1)
-                    ) {
+                    if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
                       return (
                         <Button
                           key={page}
@@ -479,21 +507,14 @@ const Smuggling: React.FC = () => {
 
       <SmugglingFormModal
         open={showAddModal}
-        onOpenChange={(open) => {
-          if (!open && !submitting) {
-            setShowAddModal(false);
-            setFormData(buildInitialForm());
-            setEditingId(null);
-            setViewingId(null);
-          }
-        }}
-        formData={formData}
-        setFormData={setFormData}
+        onOpenChange={(open) => !open && closeModal()}
         onSubmit={handleSubmit}
         title={modalTitle}
         submitLabel={submitLabel}
+        formData={formData}
+        setFormData={setFormData}
         submitting={submitting}
-        viewMode={!!viewingId}
+        viewMode={false}
       />
 
       <DeleteModal
@@ -505,8 +526,8 @@ const Smuggling: React.FC = () => {
           }
         }}
         id={deleteTargetId}
-        message={`Are you sure you want to delete "${deleteTargetName}"? This action cannot be undone.`}
-        onSubmit={handleDeleteSubmit}
+        message="Are you sure you want to delete this record? This action cannot be undone."
+        onSubmit={() => handleDeleteSubmit(deleteTargetId)}
         deleting={deleting}
         title="Delete Smuggling Record"
       />
@@ -515,4 +536,3 @@ const Smuggling: React.FC = () => {
 };
 
 export default Smuggling;
-

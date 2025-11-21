@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../UI/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../UI/Table';
 import { Button } from '../UI/Button';
@@ -62,17 +63,14 @@ const NCPStatusByDistrict: React.FC<NCPStatusByDistrictProps> = ({ ncpVehiclesId
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      // const endpoint = ncpVehiclesId
-      //   ? `/ncp-vehicles/get-all-status-by-district/${ncpVehiclesId}`
-      //   : '/ncp-vehicles/get-all-status-by-district';
-      // const response = await publicApi.get(endpoint);
-      // const data = response.data?.data || response.data || [];
+      const response = await publicApi.get('/ispec-ncp-veh-status-by-dist/get-all-ispec-ncp-veh-status-by-dist');
       
-      // For now, using empty array
-      const data: any[] = [];
+      // Handle different response structures (array or object with data property)
+      const responseData = Array.isArray(response.data) 
+        ? response.data 
+        : response.data?.data || [];
       
-      const records: NCPStatusByDistrict[] = data.map((item: any) => ({
+      const records: NCPStatusByDistrict[] = responseData.map((item: any) => ({
         _id: item._id || item.id,
         id: item._id || item.id,
         distid: item.distid || '',
@@ -102,23 +100,13 @@ const NCPStatusByDistrict: React.FC<NCPStatusByDistrictProps> = ({ ncpVehiclesId
     setShowModal(true);
   };
 
-  const handleView = async (record: NCPStatusByDistrict) => {
-    const recordId = record._id || record.id;
-    if (!recordId) {
-      return;
-    }
+  const navigate = useNavigate();
 
-    setViewingRecord(record);
-    setEditingRecord(null);
-    setIsViewMode(true);
-    setFormData({
-      id: recordId,
-      distid: record.distid,
-      banned_or_legal: record.banned_or_legal,
-      special_provisions: record.special_provisions,
-      remarks: record.remarks,
-    });
-    setShowModal(true);
+  const handleView = (record: NCPStatusByDistrict) => {
+    const recordId = record._id || record.id;
+    if (recordId) {
+      navigate(`/illegal-spectrum/ncp-status-by-district/view/${recordId}`);
+    }
   };
 
   const handleEdit = (record: NCPStatusByDistrict) => {
@@ -157,13 +145,15 @@ const NCPStatusByDistrict: React.FC<NCPStatusByDistrictProps> = ({ ncpVehiclesId
       };
 
       if (editingRecord) {
-        // TODO: Replace with actual API endpoint when available
-        // await api.put(`/ncp-vehicles/update-status-by-district/${formData.id}`, payload);
-        console.log('Update NCP status by district:', formData.id, payload);
+        const recordId = editingRecord._id || editingRecord.id;
+        if (!recordId) {
+          throw new Error('Record ID is missing');
+        }
+        await api.put(`/ispec-ncp-veh-status-by-dist/update-ispec-ncp-veh-status-by-dist/${recordId}`, payload);
+        window.alert('NCP status by district updated successfully!');
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // await api.post('/ncp-vehicles/add-status-by-district', payload);
-        console.log('Add NCP status by district:', payload);
+        await api.post('/ispec-ncp-veh-status-by-dist/add-ispec-ncp-veh-status-by-dist', payload);
+        window.alert('NCP status by district added successfully!');
       }
 
       await fetchRecords();
@@ -188,9 +178,8 @@ const NCPStatusByDistrict: React.FC<NCPStatusByDistrictProps> = ({ ncpVehiclesId
     setDeleting(true);
 
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/ncp-vehicles/delete-status-by-district/${id}`);
-      console.log('Delete NCP status by district:', id);
+      await api.delete(`/ispec-ncp-veh-status-by-dist/delete-ispec-ncp-veh-status-by-dist/${id}`);
+      window.alert('NCP status by district deleted successfully!');
 
       await fetchRecords();
       setShowDeleteModal(false);
@@ -476,7 +465,7 @@ const NCPStatusByDistrict: React.FC<NCPStatusByDistrictProps> = ({ ncpVehiclesId
         open={showDeleteModal}
         onOpenChange={setShowDeleteModal}
         id={recordToDeleteId}
-        message={`Are you sure you want to delete "${recordToDeleteName}"? This action cannot be undone.`}
+        message="Are you sure you want to delete this record? This action cannot be undone."
         onSubmit={handleDeleteSubmit}
         deleting={deleting}
         title="Delete NCP Status by District"

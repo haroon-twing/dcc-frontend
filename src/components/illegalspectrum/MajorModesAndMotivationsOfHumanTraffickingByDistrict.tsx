@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../UI/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../UI/Table';
 import { Button } from '../UI/Button';
@@ -36,9 +37,7 @@ const MajorModesAndMotivationsOfHumanTraffickingByDistrict: React.FC<MajorModesA
   const [loading, setLoading] = useState<boolean>(true);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [editingRecord, setEditingRecord] = useState<MajorModesAndMotivationsOfHumanTraffickingByDistrict | null>(null);
-  const [viewingRecord, setViewingRecord] = useState<MajorModesAndMotivationsOfHumanTraffickingByDistrict | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
-  const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [recordToDeleteId, setRecordToDeleteId] = useState<string | number | undefined>(undefined);
   const [recordToDeleteName, setRecordToDeleteName] = useState<string>('');
@@ -65,17 +64,16 @@ const MajorModesAndMotivationsOfHumanTraffickingByDistrict: React.FC<MajorModesA
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      // const endpoint = humanTraffickingId
-      //   ? `/human-trafficking/get-all-modes-motivations-by-district/${humanTraffickingId}`
-      //   : '/human-trafficking/get-all-modes-motivations-by-district';
-      // const response = await publicApi.get(endpoint);
-      // const data = response.data?.data || response.data || [];
-      
-      // For now, using empty array
-      const data: any[] = [];
-      
-      const records: MajorModesAndMotivationsOfHumanTraffickingByDistrict[] = data.map((item: any) => ({
+
+      const response = await publicApi.get('/ispec-ht-modes-motivation-by-dist/get-all-ispec-ht-modes-motivation-by-dist');
+      let data = response.data;
+      if (Array.isArray(data)) {
+        data = { data };
+      }
+
+      const dataArray = data?.data || data || [];
+
+      const records: MajorModesAndMotivationsOfHumanTraffickingByDistrict[] = dataArray.map((item: any) => ({
         _id: item._id || item.id,
         id: item._id || item.id,
         dist_id: item.dist_id || '',
@@ -84,7 +82,7 @@ const MajorModesAndMotivationsOfHumanTraffickingByDistrict: React.FC<MajorModesA
         motivation_ht: item.motivation_ht || '',
         remarks: item.remarks || '',
       }));
-      
+
       setRecords(records);
     } catch (err: any) {
       console.error('Error fetching major modes and motivations of human trafficking by district:', err);
@@ -101,36 +99,23 @@ const MajorModesAndMotivationsOfHumanTraffickingByDistrict: React.FC<MajorModesA
   const handleAdd = () => {
     setFormData(buildInitialForm());
     setEditingRecord(null);
-    setViewingRecord(null);
-    setIsViewMode(false);
     setShowModal(true);
   };
 
-  const handleView = async (record: MajorModesAndMotivationsOfHumanTraffickingByDistrict) => {
+  const navigate = useNavigate();
+
+  const handleView = (record: MajorModesAndMotivationsOfHumanTraffickingByDistrict) => {
     const recordId = record._id || record.id;
     if (!recordId) {
+      console.error('No record ID found for viewing');
       return;
     }
-
-    setViewingRecord(record);
-    setEditingRecord(null);
-    setIsViewMode(true);
-    setFormData({
-      id: recordId,
-      dist_id: record.dist_id,
-      per_pop_trafficked_last_month: record.per_pop_trafficked_last_month,
-      modes_ht: record.modes_ht,
-      motivation_ht: record.motivation_ht,
-      remarks: record.remarks,
-    });
-    setShowModal(true);
+    navigate(`/illegal-spectrum/major-modes-view/${recordId}`);
   };
 
   const handleEdit = (record: MajorModesAndMotivationsOfHumanTraffickingByDistrict) => {
     const recordId = record._id || record.id;
     setEditingRecord(record);
-    setViewingRecord(null);
-    setIsViewMode(false);
     setFormData({
       id: recordId,
       dist_id: record.dist_id,
@@ -142,10 +127,11 @@ const MajorModesAndMotivationsOfHumanTraffickingByDistrict: React.FC<MajorModesA
     setShowModal(true);
   };
 
+
   const handleDelete = (record: MajorModesAndMotivationsOfHumanTraffickingByDistrict) => {
     const recordId = record._id || record.id;
     setRecordToDeleteId(recordId);
-    setRecordToDeleteName(`District ${record.dist_id}`);
+    setRecordToDeleteName('District');
     setShowDeleteModal(true);
   };
 
@@ -164,21 +150,25 @@ const MajorModesAndMotivationsOfHumanTraffickingByDistrict: React.FC<MajorModesA
       };
 
       if (editingRecord) {
-        // TODO: Replace with actual API endpoint when available
-        // await api.put(`/human-trafficking/update-modes-motivations-by-district/${formData.id}`, payload);
-        console.log('Update major modes and motivations of human trafficking by district:', formData.id, payload);
+        const recordId = formData.id || editingRecord._id || editingRecord.id;
+        if (!recordId) {
+          throw new Error('Record ID is required for update');
+        }
+        console.log('Updating major modes and motivations of human trafficking by district:', recordId, payload);
+        const response = await api.put(`/ispec-ht-modes-motivation-by-dist/update-ispec-ht-modes-motivation-by-dist/${recordId}`, payload);
+        console.log('Update response:', response);
+        window.alert('Record updated successfully!');
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // await api.post('/human-trafficking/add-modes-motivations-by-district', payload);
-        console.log('Add major modes and motivations of human trafficking by district:', payload);
+        console.log('Adding major modes and motivations of human trafficking by district:', payload);
+        const response = await api.post('/ispec-ht-modes-motivation-by-dist/add-ispec-ht-modes-motivation-by-dist', payload);
+        console.log('Add response:', response);
+        window.alert('Record added successfully!');
       }
 
       await fetchRecords();
       setShowModal(false);
       setFormData(buildInitialForm());
       setEditingRecord(null);
-      setViewingRecord(null);
-      setIsViewMode(false);
     } catch (error: any) {
       console.error('Error submitting major modes and motivations of human trafficking by district:', error);
       alert(
@@ -195,14 +185,15 @@ const MajorModesAndMotivationsOfHumanTraffickingByDistrict: React.FC<MajorModesA
     setDeleting(true);
 
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/human-trafficking/delete-modes-motivations-by-district/${id}`);
-      console.log('Delete major modes and motivations of human trafficking by district:', id);
+      console.log('Deleting major modes and motivations of human trafficking by district:', id);
+      await api.delete(`/ispec-ht-modes-motivation-by-dist/delete-ispec-ht-modes-motivation-by-dist/${id}`);
+      console.log('Delete response: success');
 
       await fetchRecords();
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
       setRecordToDeleteName('');
+      window.alert('Record deleted successfully!');
     } catch (error: any) {
       console.error('Error deleting major modes and motivations of human trafficking by district:', error);
       alert(
@@ -468,19 +459,16 @@ const MajorModesAndMotivationsOfHumanTraffickingByDistrict: React.FC<MajorModesA
         onOpenChange={(open) => {
           if (!open && !submitting) {
             setShowModal(false);
-            setFormData(buildInitialForm());
             setEditingRecord(null);
-            setViewingRecord(null);
-            setIsViewMode(false);
           }
         }}
         formData={formData}
         setFormData={setFormData}
         onSubmit={handleSubmit}
-        title={isViewMode ? 'View Major Modes and Motivations of Human Trafficking by District' : editingRecord ? 'Edit Major Modes and Motivations of Human Trafficking by District' : 'Add Major Modes and Motivations of Human Trafficking by District'}
-        submitLabel={editingRecord ? 'Save Changes' : 'Add Major Modes and Motivations by District'}
+        title={editingRecord ? 'Edit Record' : 'Add New Record'}
+        submitLabel={editingRecord ? 'Update' : 'Add'}
         submitting={submitting}
-        viewMode={isViewMode}
+        viewMode={false}
       />
 
       <DeleteModal
