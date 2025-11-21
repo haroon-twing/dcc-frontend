@@ -8,6 +8,12 @@ import api from '../../lib/api';
 import CurriculumFormModal from '../modals/madaris/CurriculumFormModal';
 import DeleteModal from '../UI/DeleteModal';
 
+interface Subject {
+  _id?: string;
+  id?: string;
+  subject: string;
+}
+
 interface Curriculum {
   _id?: string;
   id?: string;
@@ -15,6 +21,7 @@ interface Curriculum {
   description: string;
   status: string;
   remarks: string;
+  subjects?: Subject[] | string[]; // Can be array of objects or array of subject names
 }
 
 interface CurriculumProps {
@@ -26,6 +33,7 @@ interface CurriculumFormState {
   description: string;
   status: string;
   remarks: string;
+  selectedSubjects: string[]; // Array of subject IDs
 }
 
 const Curriculum: React.FC<CurriculumProps> = ({ madarisId }) => {
@@ -50,14 +58,45 @@ const Curriculum: React.FC<CurriculumProps> = ({ madarisId }) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
   
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [loadingSubjects, setLoadingSubjects] = useState<boolean>(false);
+
   const buildInitialForm = (): CurriculumFormState => ({
     title: '',
     description: '',
     status: 'active',
     remarks: '',
+    selectedSubjects: [],
   });
 
   const [formData, setFormData] = useState<CurriculumFormState>(buildInitialForm());
+
+  // Fetch subjects from API
+  const fetchSubjects = async () => {
+    try {
+      setLoadingSubjects(true);
+      const endpoint = '/madaris/get-subject-curriculums';
+      const response = await publicApi.get(endpoint);
+      const data = response.data?.data || response.data || [];
+      
+      const subjectsList: Subject[] = data.map((item: any) => ({
+        _id: item._id || item.id,
+        id: item._id || item.id,
+        subject: item.subject || 'N/A',
+      }));
+      
+      setSubjects(subjectsList);
+    } catch (err: any) {
+      console.error('Error fetching subjects:', err);
+      setSubjects([]);
+    } finally {
+      setLoadingSubjects(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSubjects();
+  }, []);
 
   const fetchCurriculums = async () => {
     if (!madarisId) {
@@ -68,7 +107,7 @@ const Curriculum: React.FC<CurriculumProps> = ({ madarisId }) => {
     try {
       setLoading(true);
       setError(null);
-      const endpoint = `/madaris/get-curriculums?madaris_id=${madarisId}`;
+      const endpoint = `/madaris/curriculums-against-madaris/${madarisId}`;
       const response = await publicApi.get(endpoint);
       const data = response.data?.data || response.data || [];
       
@@ -79,6 +118,7 @@ const Curriculum: React.FC<CurriculumProps> = ({ madarisId }) => {
         description: item.description || 'N/A',
         status: item.status || 'active',
         remarks: item.remarks || '',
+        subjects: item.subjects || [], // Can be array of objects or array of strings
       }));
       
       setCurriculums(curriculums);
@@ -113,15 +153,34 @@ const Curriculum: React.FC<CurriculumProps> = ({ madarisId }) => {
     setIsViewMode(true);
     
     try {
-      const viewEndpoint = `/madaris/get-single-curriculum/${curriculumId}`;
+      const viewEndpoint = `/madaris/curriculums/${curriculumId}`;
       const response = await publicApi.get(viewEndpoint);
       const curriculumData = response.data?.data || response.data;
+
+      // Extract subject IDs from curriculumData.subjects
+      let selectedSubjectIds: string[] = [];
+      if (curriculumData.subjects && Array.isArray(curriculumData.subjects)) {
+        selectedSubjectIds = curriculumData.subjects.map((subj: any) => {
+          if (typeof subj === 'string') {
+            // If it's already an ID string
+            return subj;
+          } else if (subj._id) {
+            // If it's an object with _id
+            return subj._id;
+          } else if (subj.id) {
+            // If it's an object with id
+            return subj.id;
+          }
+          return '';
+        }).filter((id: string) => id !== '');
+      }
 
       setFormData({
         title: curriculumData.title || '',
         description: curriculumData.description || '',
         status: curriculumData.status || 'active',
         remarks: curriculumData.remarks || '',
+        selectedSubjects: selectedSubjectIds,
       });
       
       setShowModal(true);
@@ -133,11 +192,20 @@ const Curriculum: React.FC<CurriculumProps> = ({ madarisId }) => {
         'Failed to load curriculum details. Please try again.'
       );
       // Fallback to existing data
+      let fallbackSubjectIds: string[] = [];
+      if (curriculum.subjects && Array.isArray(curriculum.subjects)) {
+        fallbackSubjectIds = curriculum.subjects.map((subj: any) => {
+          if (typeof subj === 'string') return subj;
+          return subj._id || subj.id || '';
+        }).filter((id: string) => id !== '');
+      }
+
       setFormData({
         title: curriculum.title || '',
         description: curriculum.description || '',
         status: curriculum.status || 'active',
         remarks: curriculum.remarks || '',
+        selectedSubjects: fallbackSubjectIds,
       });
       setShowModal(true);
     } finally {
@@ -149,11 +217,22 @@ const Curriculum: React.FC<CurriculumProps> = ({ madarisId }) => {
     setEditingCurriculum(curriculum);
     setViewingCurriculum(null);
     setIsViewMode(false);
+    
+    // Extract subject IDs from curriculum.subjects
+    let selectedSubjectIds: string[] = [];
+    if (curriculum.subjects && Array.isArray(curriculum.subjects)) {
+      selectedSubjectIds = curriculum.subjects.map((subj: any) => {
+        if (typeof subj === 'string') return subj;
+        return subj._id || subj.id || '';
+      }).filter((id: string) => id !== '');
+    }
+
     setFormData({
       title: curriculum.title || '',
       description: curriculum.description || '',
       status: curriculum.status || 'active',
       remarks: curriculum.remarks || '',
+      selectedSubjects: selectedSubjectIds,
     });
     setShowModal(true);
   };
@@ -171,27 +250,38 @@ const Curriculum: React.FC<CurriculumProps> = ({ madarisId }) => {
     setSubmitting(true);
 
     try {
-      const payload = {
-        title: formData.title,
-        description: formData.description,
-        status: formData.status,
-        remarks: formData.remarks,
-        madaris_id: madarisId,
-      };
-
       if (editingCurriculum) {
         const curriculumId = editingCurriculum._id || editingCurriculum.id;
         if (!curriculumId) {
           throw new Error('Curriculum ID is required for update');
         }
-        const updateEndpoint = `/madaris/update-curriculum/${curriculumId}`;
+        // For update, use subject_ids as comma-separated string (same format as add)
+        const payload = {
+          title: formData.title,
+          description: formData.description,
+          status: formData.status,
+          remarks: formData.remarks,
+          madaris_id: madarisId,
+          subject_ids: formData.selectedSubjects.join(','), // Comma-separated string of subject IDs
+        };
+        const updateEndpoint = `/madaris/curriculums/${curriculumId}`;
         await api.put(updateEndpoint, payload);
       } else {
-        const addEndpoint = '/madaris/add-curriculum';
+        // For add, use the new endpoint with comma-separated subject_ids
+        const payload = {
+          title: formData.title,
+          description: formData.description,
+          status: formData.status,
+          remarks: formData.remarks,
+          madaris_id: madarisId, // Required by backend but not shown in form/table
+          subject_ids: formData.selectedSubjects.join(','), // Comma-separated string of subject IDs
+        };
+        const addEndpoint = '/madaris/create-curriculum-with-subjects';
         await api.post(addEndpoint, payload);
       }
 
-      await fetchCurriculums();
+      // Refresh both curriculums and subjects to ensure subject names are available
+      await Promise.all([fetchCurriculums(), fetchSubjects()]);
       
       setShowModal(false);
       setFormData(buildInitialForm());
@@ -217,7 +307,7 @@ const Curriculum: React.FC<CurriculumProps> = ({ madarisId }) => {
   const handleDeleteSubmit = async (id: string | number) => {
     setDeleting(true);
     try {
-      const deleteEndpoint = `/madaris/delete-curriculum/${id}`;
+      const deleteEndpoint = `/madaris/curriculums/${id}`;
       await api.delete(deleteEndpoint);
       
       setShowDeleteModal(false);
@@ -245,11 +335,29 @@ const Curriculum: React.FC<CurriculumProps> = ({ madarisId }) => {
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       filtered = curriculums.filter((curriculum) => {
+        // Get subject names for search
+        let subjectNames = '';
+        if (curriculum.subjects && Array.isArray(curriculum.subjects)) {
+          subjectNames = curriculum.subjects.map((subj: any) => {
+            if (typeof subj === 'string') {
+              const foundSubject = subjects.find(s => s._id === subj || s.id === subj);
+              return foundSubject ? foundSubject.subject : subj;
+            } else if (subj.subject) {
+              return subj.subject;
+            } else if (subj._id || subj.id) {
+              const foundSubject = subjects.find(s => s._id === subj._id || s._id === subj.id || s.id === subj._id || s.id === subj.id);
+              return foundSubject ? foundSubject.subject : '';
+            }
+            return '';
+          }).join(' ').toLowerCase();
+        }
+
         return (
           (curriculum.title || '').toLowerCase().includes(searchLower) ||
           (curriculum.description || '').toLowerCase().includes(searchLower) ||
           (curriculum.status || '').toLowerCase().includes(searchLower) ||
-          (curriculum.remarks || '').toLowerCase().includes(searchLower)
+          (curriculum.remarks || '').toLowerCase().includes(searchLower) ||
+          subjectNames.includes(searchLower)
         );
       });
     }
@@ -436,6 +544,11 @@ const Curriculum: React.FC<CurriculumProps> = ({ madarisId }) => {
                     </button>
                   </TableHead>
                   <TableHead>
+                    <button className="flex items-center">
+                      Subjects
+                    </button>
+                  </TableHead>
+                  <TableHead>
                     <button
                       onClick={() => handleSort('status')}
                       className="flex items-center hover:text-foreground transition-colors"
@@ -460,6 +573,28 @@ const Curriculum: React.FC<CurriculumProps> = ({ madarisId }) => {
                     <TableCell className="font-medium">{curriculum.title || 'N/A'}</TableCell>
                     <TableCell className="max-w-xs truncate" title={curriculum.description}>
                       {curriculum.description || 'N/A'}
+                    </TableCell>
+                    <TableCell className="max-w-xs">
+                      {(() => {
+                        if (!curriculum.subjects || !Array.isArray(curriculum.subjects) || curriculum.subjects.length === 0) {
+                          return 'N/A';
+                        }
+                        // Extract subject names
+                        const subjectNames = curriculum.subjects.map((subj: any) => {
+                          if (typeof subj === 'string') {
+                            // If it's a string, try to find the subject name from the subjects list
+                            const foundSubject = subjects.find(s => s._id === subj || s.id === subj);
+                            return foundSubject ? foundSubject.subject : subj;
+                          } else if (subj.subject) {
+                            return subj.subject;
+                          } else if (subj._id || subj.id) {
+                            const foundSubject = subjects.find(s => s._id === subj._id || s._id === subj.id || s.id === subj._id || s.id === subj.id);
+                            return foundSubject ? foundSubject.subject : 'N/A';
+                          }
+                          return 'N/A';
+                        }).filter((name: string) => name !== 'N/A');
+                        return subjectNames.length > 0 ? subjectNames.join(', ') : 'N/A';
+                      })()}
                     </TableCell>
                     <TableCell>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -584,6 +719,8 @@ const Curriculum: React.FC<CurriculumProps> = ({ madarisId }) => {
       submitLabel={editingCurriculum ? 'Save Changes' : 'Add Curriculum'}
       submitting={submitting || loadingCurriculum}
       viewMode={isViewMode}
+      subjects={subjects}
+      loadingSubjects={loadingSubjects}
     />
 
     <DeleteModal

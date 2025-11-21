@@ -5,7 +5,6 @@ import { Button } from '../components/UI/Button';
 import { ArrowLeft, Edit, Trash2, FileText, Calendar, MapPin, User, FileText as FileTextIcon, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { publicApi } from '../lib/api';
 import api from '../lib/api';
-import { format } from 'date-fns';
 import DeleteModal from '../components/UI/DeleteModal';
 
 interface PolicyAndLegislativeAmendment {
@@ -67,7 +66,17 @@ const PolicyAndLegislativeAmendmentDetails: React.FC = () => {
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
     try {
-      return format(new Date(dateString), 'PPP');
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return dateString;
+      }
+      // Format similar to date-fns 'PPP' format: "April 29th, 2021"
+      const options: Intl.DateTimeFormatOptions = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      };
+      return date.toLocaleDateString('en-US', options);
     } catch {
       return dateString;
     }

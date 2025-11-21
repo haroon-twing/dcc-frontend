@@ -33,7 +33,8 @@ const Navigation: React.FC = () => {
         { name: "Dashboard", href: "/madaris/dashboard" },
         { name: "List", href: "/madaris/list" },
         { name: "Non Cooperative", href: "/madaris/non-cooperative" },
-        { name: "Action Against Illegal Madaris", href: "/madaris/action-against-illegal-madaris" },
+        { name: "Action Against Unregistered/non-cooperative Madaris", href: "/madaris/action-against-illegal-madaris" },
+        { name: "Subjects", href: "/madaris/subjects" },
       ],
     },
     {

@@ -3,19 +3,20 @@ import Modal from '../../UI/Modal';
 import { Button } from '../../UI/Button';
 import Input from '../../UI/Input';
 
-interface ActionAgainstIllegalMadarisFormState {
-  name: string;
-  role_of_institute: string;
-  what_action_taken: string;
-  date_of_action_taken: string;
+interface VocationalTrainingFormState {
+  tr_name: string;
+  age_group: string;
+  duration: string;
+  start_date: string;
+  end_date: string;
   remarks: string;
 }
 
-interface ActionAgainstIllegalMadarisFormModalProps {
+interface VocationalTrainingFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  formData: ActionAgainstIllegalMadarisFormState;
-  setFormData: React.Dispatch<React.SetStateAction<ActionAgainstIllegalMadarisFormState>>;
+  formData: VocationalTrainingFormState;
+  setFormData: React.Dispatch<React.SetStateAction<VocationalTrainingFormState>>;
   onSubmit: (e: React.FormEvent) => void;
   title?: string;
   submitLabel?: string;
@@ -23,18 +24,18 @@ interface ActionAgainstIllegalMadarisFormModalProps {
   viewMode?: boolean;
 }
 
-const ActionAgainstIllegalMadarisFormModal: React.FC<ActionAgainstIllegalMadarisFormModalProps> = ({
+const VocationalTrainingFormModal: React.FC<VocationalTrainingFormModalProps> = ({
   open,
   onOpenChange,
   formData,
   setFormData,
   onSubmit,
-  title = 'Add Action Against unregistered/non-cooperative Madaris',
+  title = 'Add Vocational Training',
   submitLabel = 'Save',
   submitting = false,
   viewMode = false,
 }) => {
-  const handleChange = (field: keyof ActionAgainstIllegalMadarisFormState, value: string) => {
+  const handleChange = (field: keyof VocationalTrainingFormState, value: string) => {
     if (viewMode) return;
     setFormData((prev) => ({
       ...prev,
@@ -57,63 +58,78 @@ const ActionAgainstIllegalMadarisFormModal: React.FC<ActionAgainstIllegalMadaris
     >
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Name */}
-          <div>
+          {/* Training Name */}
+          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-foreground mb-1">
-              Name <span className="text-red-500">*</span>
+              Training Name <span className="text-red-500">*</span>
             </label>
             <Input
               type="text"
-              value={formData.name}
-              onChange={(e) => handleChange('name', e.target.value)}
-              placeholder="Enter name"
+              value={formData.tr_name}
+              onChange={(e) => handleChange('tr_name', e.target.value)}
+              placeholder="Enter training name"
               required
               disabled={submitting || viewMode}
               readOnly={viewMode}
             />
           </div>
 
-          {/* Role of Institute */}
+          {/* Age Group */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">
-              Role of Institute <span className="text-red-500">*</span>
+              Age Group <span className="text-red-500">*</span>
             </label>
             <Input
               type="text"
-              value={formData.role_of_institute}
-              onChange={(e) => handleChange('role_of_institute', e.target.value)}
-              placeholder="Enter role of institute"
+              value={formData.age_group}
+              onChange={(e) => handleChange('age_group', e.target.value)}
+              placeholder="e.g., 18-25"
               required
               disabled={submitting || viewMode}
               readOnly={viewMode}
             />
           </div>
 
-          {/* What Action Taken */}
+          {/* Duration */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">
-              What Action Taken <span className="text-red-500">*</span>
+              Duration <span className="text-red-500">*</span>
             </label>
             <Input
               type="text"
-              value={formData.what_action_taken}
-              onChange={(e) => handleChange('what_action_taken', e.target.value)}
-              placeholder="Enter action taken"
+              value={formData.duration}
+              onChange={(e) => handleChange('duration', e.target.value)}
+              placeholder="e.g., 3 months"
               required
               disabled={submitting || viewMode}
               readOnly={viewMode}
             />
           </div>
 
-          {/* Date of Action Taken */}
+          {/* Start Date */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">
-              Date of Action Taken <span className="text-red-500">*</span>
+              Start Date <span className="text-red-500">*</span>
             </label>
             <Input
               type="date"
-              value={formData.date_of_action_taken}
-              onChange={(e) => handleChange('date_of_action_taken', e.target.value)}
+              value={formData.start_date}
+              onChange={(e) => handleChange('start_date', e.target.value)}
+              required
+              disabled={submitting || viewMode}
+              readOnly={viewMode}
+            />
+          </div>
+
+          {/* End Date */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">
+              End Date <span className="text-red-500">*</span>
+            </label>
+            <Input
+              type="date"
+              value={formData.end_date}
+              onChange={(e) => handleChange('end_date', e.target.value)}
               required
               disabled={submitting || viewMode}
               readOnly={viewMode}
@@ -170,5 +186,5 @@ const ActionAgainstIllegalMadarisFormModal: React.FC<ActionAgainstIllegalMadaris
   );
 };
 
-export default ActionAgainstIllegalMadarisFormModal;
+export default VocationalTrainingFormModal;
 

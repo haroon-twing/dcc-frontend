@@ -13,6 +13,7 @@ export interface SafeCityFormState {
   city_id?: CityOption | null;
   approval_date: string;
   present_status: string;
+  per_present_status?: number;
   no_of_total_cameras: number;
   active_cameras: number;
   inactive_cameras: number;
@@ -33,7 +34,7 @@ interface SafeCityFormModalProps {
   submitting?: boolean;
 }
 
-const statusOptions = ['Active', 'Inactive', 'Pending', 'Under Maintenance'];
+const statusOptions = ['pending', 'in progress'];
 
 const SafeCityFormModal: React.FC<SafeCityFormModalProps> = ({
   open,
@@ -84,9 +85,13 @@ const SafeCityFormModal: React.FC<SafeCityFormModalProps> = ({
         return updated;
       }
       if (key === 'no_of_total_cameras' || key === 'active_cameras' || key === 'inactive_cameras' || 
-          key === 'fr_cameras' || key === 'non_fr_cameras' || key === 'no_of_employees') {
+          key === 'fr_cameras' || key === 'non_fr_cameras' || key === 'no_of_employees' || key === 'per_present_status') {
         updated[key] = value === '' ? 0 : Number(value) || 0;
         return updated;
+      }
+      if (key === 'present_status' && value !== 'in progress') {
+        // Clear percentage when status is not "in progress"
+        updated.per_present_status = undefined;
       }
       (updated as any)[key] = value;
       return updated;
@@ -227,11 +232,30 @@ const SafeCityFormModal: React.FC<SafeCityFormModalProps> = ({
               <option value="">Select Status</option>
               {statusOptions.map((status) => (
                 <option key={status} value={status}>
-                  {status}
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
                 </option>
               ))}
             </select>
           </div>
+
+          {/* Percentage of Progress - Only show when "in progress" is selected */}
+          {formData.present_status === 'in progress' && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                Progress Percentage <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="number"
+                value={formData.per_present_status || ''}
+                onChange={(e) => handleChange('per_present_status', e.target.value)}
+                placeholder="0"
+                min="0"
+                max="100"
+                required
+                disabled={submitting}
+              />
+            </div>
+          )}
 
           {/* Number of Employees */}
           <div>

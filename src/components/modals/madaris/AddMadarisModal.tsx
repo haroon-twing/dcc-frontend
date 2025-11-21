@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Modal from '../../UI/Modal';
 import { Button } from '../../UI/Button';
 import Input from '../../UI/Input';
-import { fetchLookups, fetchSchoolOfThoughts, clearLookupCache, type ProvinceOption, type DistrictOption, type SchoolOfThoughtOption } from '../../../lib/lookups';
+import { fetchLookups, fetchSchoolOfThoughts, fetchWafaqs, clearLookupCache, type ProvinceOption, type DistrictOption, type SchoolOfThoughtOption, type WafaqOption } from '../../../lib/lookups';
 
 // Re-export types for backward compatibility
 export type { ProvinceOption, DistrictOption };
@@ -57,6 +57,7 @@ const AddMadarisModal: React.FC<AddMadarisModalProps> = ({
   const [localProvinces, setLocalProvinces] = useState<ProvinceOption[]>(propsProvinces);
   const [allDistricts, setAllDistricts] = useState<DistrictOption[]>([]);
   const [schoolOfThoughts, setSchoolOfThoughts] = useState<SchoolOfThoughtOption[]>([]);
+  const [wafaqs, setWafaqs] = useState<WafaqOption[]>([]);
   const [loadingLookups, setLoadingLookups] = useState(false);
 
   // Fetch lookups if not provided via props
@@ -77,12 +78,16 @@ const AddMadarisModal: React.FC<AddMadarisModalProps> = ({
           });
           setAllDistricts(districts);
           
-          // Still fetch school of thoughts separately
+          // Still fetch school of thoughts and wafaqs separately
           try {
-            const sots = await fetchSchoolOfThoughts();
+            const [sots, wafaqsData] = await Promise.all([
+              fetchSchoolOfThoughts(),
+              fetchWafaqs()
+            ]);
             setSchoolOfThoughts(sots);
+            setWafaqs(wafaqsData);
           } catch (error) {
-            console.error('Error loading school of thoughts:', error);
+            console.error('Error loading school of thoughts or wafaqs:', error);
           }
         } else {
           // Fetch all lookups if not provided
@@ -92,6 +97,15 @@ const AddMadarisModal: React.FC<AddMadarisModalProps> = ({
           setLocalProvinces(provinces);
           setAllDistricts(districts);
           setSchoolOfThoughts(sots);
+          
+          // Fetch wafaqs separately
+          try {
+            const wafaqsData = await fetchWafaqs();
+            setWafaqs(wafaqsData);
+          } catch (error) {
+            console.error('Error loading wafaqs:', error);
+          }
+          
           console.log('Loaded provinces:', provinces.length, 'districts:', districts.length, 'school of thoughts:', sots.length);
         }
       } catch (error) {
@@ -327,11 +341,25 @@ const AddMadarisModal: React.FC<AddMadarisModalProps> = ({
           </select>
         </div>
 
-        <Input
-          label="Registered From Wafaq"
-          value={formData.reg_from_wafaq}
-          onChange={(e) => handleChange('reg_from_wafaq', e.target.value)}
-        />
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-1">Registered From Wafaq</label>
+          <select
+            value={wafaqs.find((wafaq) => wafaq.wafaq_name === formData.reg_from_wafaq)?._id || ''}
+            onChange={(e) => {
+              const selected = wafaqs.find((wafaq) => wafaq._id === e.target.value);
+              handleChange('reg_from_wafaq', selected?.wafaq_name || '');
+            }}
+            className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+            disabled={loadingLookups}
+          >
+            <option value="">{loadingLookups ? 'Loading wafaqs...' : 'Select Wafaq'}</option>
+            {wafaqs.map((wafaq) => (
+              <option key={wafaq._id} value={wafaq._id}>
+                {wafaq.wafaq_name}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <div>
           <label className="block text-sm font-medium text-foreground mb-1">Remarks</label>

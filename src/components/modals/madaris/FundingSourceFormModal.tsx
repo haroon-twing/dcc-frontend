@@ -3,19 +3,18 @@ import Modal from '../../UI/Modal';
 import { Button } from '../../UI/Button';
 import Input from '../../UI/Input';
 
-interface ActionAgainstIllegalMadarisFormState {
-  name: string;
-  role_of_institute: string;
-  what_action_taken: string;
-  date_of_action_taken: string;
+interface FundingSourceFormState {
+  source_name: string;
+  source_type: string;
+  funding_purpose: string;
   remarks: string;
 }
 
-interface ActionAgainstIllegalMadarisFormModalProps {
+interface FundingSourceFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  formData: ActionAgainstIllegalMadarisFormState;
-  setFormData: React.Dispatch<React.SetStateAction<ActionAgainstIllegalMadarisFormState>>;
+  formData: FundingSourceFormState;
+  setFormData: React.Dispatch<React.SetStateAction<FundingSourceFormState>>;
   onSubmit: (e: React.FormEvent) => void;
   title?: string;
   submitLabel?: string;
@@ -23,18 +22,18 @@ interface ActionAgainstIllegalMadarisFormModalProps {
   viewMode?: boolean;
 }
 
-const ActionAgainstIllegalMadarisFormModal: React.FC<ActionAgainstIllegalMadarisFormModalProps> = ({
+const FundingSourceFormModal: React.FC<FundingSourceFormModalProps> = ({
   open,
   onOpenChange,
   formData,
   setFormData,
   onSubmit,
-  title = 'Add Action Against unregistered/non-cooperative Madaris',
+  title = 'Add Funding Source',
   submitLabel = 'Save',
   submitting = false,
   viewMode = false,
 }) => {
-  const handleChange = (field: keyof ActionAgainstIllegalMadarisFormState, value: string) => {
+  const handleChange = (field: keyof FundingSourceFormState, value: string) => {
     if (viewMode) return;
     setFormData((prev) => ({
       ...prev,
@@ -57,63 +56,51 @@ const ActionAgainstIllegalMadarisFormModal: React.FC<ActionAgainstIllegalMadaris
     >
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Name */}
-          <div>
+          {/* Source Name */}
+          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-foreground mb-1">
-              Name <span className="text-red-500">*</span>
+              Source Name <span className="text-red-500">*</span>
             </label>
             <Input
               type="text"
-              value={formData.name}
-              onChange={(e) => handleChange('name', e.target.value)}
-              placeholder="Enter name"
+              value={formData.source_name}
+              onChange={(e) => handleChange('source_name', e.target.value)}
+              placeholder="Enter source name"
               required
               disabled={submitting || viewMode}
               readOnly={viewMode}
             />
           </div>
 
-          {/* Role of Institute */}
+          {/* Source Type */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">
-              Role of Institute <span className="text-red-500">*</span>
+              Source Type <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={formData.source_type}
+              onChange={(e) => handleChange('source_type', e.target.value)}
+              required
+              disabled={submitting || viewMode}
+              className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="">Select source type</option>
+              <option value="Government">Government</option>
+              <option value="Private">Private</option>
+              <option value="NGO">NGO</option>
+            </select>
+          </div>
+
+          {/* Funding Purpose */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">
+              Funding Purpose <span className="text-red-500">*</span>
             </label>
             <Input
               type="text"
-              value={formData.role_of_institute}
-              onChange={(e) => handleChange('role_of_institute', e.target.value)}
-              placeholder="Enter role of institute"
-              required
-              disabled={submitting || viewMode}
-              readOnly={viewMode}
-            />
-          </div>
-
-          {/* What Action Taken */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">
-              What Action Taken <span className="text-red-500">*</span>
-            </label>
-            <Input
-              type="text"
-              value={formData.what_action_taken}
-              onChange={(e) => handleChange('what_action_taken', e.target.value)}
-              placeholder="Enter action taken"
-              required
-              disabled={submitting || viewMode}
-              readOnly={viewMode}
-            />
-          </div>
-
-          {/* Date of Action Taken */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">
-              Date of Action Taken <span className="text-red-500">*</span>
-            </label>
-            <Input
-              type="date"
-              value={formData.date_of_action_taken}
-              onChange={(e) => handleChange('date_of_action_taken', e.target.value)}
+              value={formData.funding_purpose}
+              onChange={(e) => handleChange('funding_purpose', e.target.value)}
+              placeholder="e.g., Infrastructure Development"
               required
               disabled={submitting || viewMode}
               readOnly={viewMode}
@@ -170,5 +157,5 @@ const ActionAgainstIllegalMadarisFormModal: React.FC<ActionAgainstIllegalMadaris
   );
 };
 
-export default ActionAgainstIllegalMadarisFormModal;
+export default FundingSourceFormModal;
 

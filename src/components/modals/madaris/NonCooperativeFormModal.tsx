@@ -9,6 +9,11 @@ interface NonCooperativeFormState {
   remarks: string;
 }
 
+interface NonCooperationTypeOption {
+  _id: string;
+  value: string;
+}
+
 interface NonCooperativeFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -19,6 +24,8 @@ interface NonCooperativeFormModalProps {
   submitLabel?: string;
   submitting?: boolean;
   viewMode?: boolean;
+  nonCooperationTypes?: NonCooperationTypeOption[];
+  loadingNonCooperationTypes?: boolean;
 }
 
 const NonCooperativeFormModal: React.FC<NonCooperativeFormModalProps> = ({
@@ -31,6 +38,8 @@ const NonCooperativeFormModal: React.FC<NonCooperativeFormModalProps> = ({
   submitLabel = 'Save',
   submitting = false,
   viewMode = false,
+  nonCooperationTypes = [],
+  loadingNonCooperationTypes = false,
 }) => {
   const handleChange = (field: keyof NonCooperativeFormState, value: string) => {
     if (viewMode) return;
@@ -76,15 +85,20 @@ const NonCooperativeFormModal: React.FC<NonCooperativeFormModalProps> = ({
             <label className="block text-sm font-medium text-foreground mb-1">
               Nature of Non Cooperation <span className="text-red-500">*</span>
             </label>
-            <Input
-              type="text"
+            <select
               value={formData.nature_of_non_cooperation}
               onChange={(e) => handleChange('nature_of_non_cooperation', e.target.value)}
-              placeholder="Enter nature of non-cooperation"
               required
-              disabled={submitting || viewMode}
-              readOnly={viewMode}
-            />
+              disabled={submitting || viewMode || loadingNonCooperationTypes}
+              className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="">Select nature of non-cooperation</option>
+              {nonCooperationTypes.map((type) => (
+                <option key={type._id} value={type._id}>
+                  {type.value}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Remarks */}
