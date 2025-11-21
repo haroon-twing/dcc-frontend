@@ -423,6 +423,9 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <ArmsExplosivesUreaEditPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
           <Route path="/illegal-spectrum/illegal-sims" element={
             <ProtectedRoute>
               <Layout>
@@ -535,11 +538,11 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
-        </Routes>
-          </React.Suspense>
-        </CommunicationProvider>
-      </AuthProvider>
-    </ThemeProvider>
+          </Routes>
+        </React.Suspense>
+      </CommunicationProvider>
+    </AuthProvider>
+  </ThemeProvider>
   );
 }
 
