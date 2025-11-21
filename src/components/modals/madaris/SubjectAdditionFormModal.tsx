@@ -29,7 +29,7 @@ const SubjectAdditionFormModal: React.FC<SubjectAdditionFormModalProps> = ({
   formData,
   setFormData,
   onSubmit,
-  title = 'Add Subject Addition',
+  title = 'Add Subject',
   submitLabel = 'Save',
   submitting = false,
   viewMode = false,

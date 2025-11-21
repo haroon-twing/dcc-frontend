@@ -27,22 +27,38 @@ export interface CityOption {
   name: string;
 }
 
+export interface WafaqOption {
+  _id: string;
+  wafaq_name: string;
+}
+
+export interface NonCooperationTypeOption {
+  _id: string;
+  value: string;
+}
+
 // Cache for lookups
 let provincesCache: ProvinceOption[] | null = null;
 let districtsCache: DistrictOption[] | null = null;
 let schoolOfThoughtsCache: SchoolOfThoughtOption[] | null = null;
 let countriesCache: CountryOption[] | null = null;
 let citiesCache: CityOption[] | null = null;
+let wafaqsCache: WafaqOption[] | null = null;
+let nonCooperationTypesCache: NonCooperationTypeOption[] | null = null;
 let isLoadingProvinces = false;
 let isLoadingDistricts = false;
 let isLoadingSchoolOfThoughts = false;
 let isLoadingCountries = false;
 let isLoadingCities = false;
+let isLoadingWafaqs = false;
+let isLoadingNonCooperationTypes = false;
 let provincesPromise: Promise<ProvinceOption[]> | null = null;
 let districtsPromise: Promise<DistrictOption[]> | null = null;
 let schoolOfThoughtsPromise: Promise<SchoolOfThoughtOption[]> | null = null;
 let countriesPromise: Promise<CountryOption[]> | null = null;
 let citiesPromise: Promise<CityOption[]> | null = null;
+let wafaqsPromise: Promise<WafaqOption[]> | null = null;
+let nonCooperationTypesPromise: Promise<NonCooperationTypeOption[]> | null = null;
 
 /**
  * Fetch all provinces from the API
@@ -252,6 +268,88 @@ export const fetchCities = async (): Promise<CityOption[]> => {
 };
 
 /**
+ * Fetch all wafaqs from the API
+ * Uses caching to avoid redundant API calls
+ */
+export const fetchWafaqs = async (): Promise<WafaqOption[]> => {
+  // Return cached data if available
+  if (wafaqsCache) {
+    return wafaqsCache;
+  }
+
+  // Return existing promise if already loading
+  if (isLoadingWafaqs && wafaqsPromise) {
+    return wafaqsPromise;
+  }
+
+  // Create new fetch promise
+  isLoadingWafaqs = true;
+  wafaqsPromise = (async () => {
+    try {
+      const response = await publicApi.get('/all-wafaqs');
+      const data = response.data?.data || response.data || [];
+      
+      const wafaqs: WafaqOption[] = data.map((wafaq: any) => ({
+        _id: wafaq._id || wafaq.id,
+        wafaq_name: wafaq.wafaq_name || wafaq.name || '',
+      }));
+
+      wafaqsCache = wafaqs;
+      return wafaqs;
+    } catch (error) {
+      console.error('Error fetching wafaqs:', error);
+      throw error;
+    } finally {
+      isLoadingWafaqs = false;
+      wafaqsPromise = null;
+    }
+  })();
+
+  return wafaqsPromise;
+};
+
+/**
+ * Fetch all non-cooperation types from the API
+ * Uses caching to avoid redundant API calls
+ */
+export const fetchNonCooperationTypes = async (): Promise<NonCooperationTypeOption[]> => {
+  // Return cached data if available
+  if (nonCooperationTypesCache) {
+    return nonCooperationTypesCache;
+  }
+
+  // Return existing promise if already loading
+  if (isLoadingNonCooperationTypes && nonCooperationTypesPromise) {
+    return nonCooperationTypesPromise;
+  }
+
+  // Create new fetch promise
+  isLoadingNonCooperationTypes = true;
+  nonCooperationTypesPromise = (async () => {
+    try {
+      const response = await publicApi.get('/all-non-cooperation-types');
+      const data = response.data?.data || response.data || [];
+      
+      const nonCooperationTypes: NonCooperationTypeOption[] = data.map((type: any) => ({
+        _id: type._id || type.id,
+        value: type.value || type.name || 'N/A',
+      }));
+      
+      nonCooperationTypesCache = nonCooperationTypes;
+      return nonCooperationTypes;
+    } catch (error) {
+      console.error('Error fetching non-cooperation types:', error);
+      throw error;
+    } finally {
+      isLoadingNonCooperationTypes = false;
+      nonCooperationTypesPromise = null;
+    }
+  })();
+
+  return nonCooperationTypesPromise;
+};
+
+/**
  * Fetch both provinces and districts and associate districts with provinces
  */
 export const fetchLookups = async (): Promise<{
@@ -311,16 +409,22 @@ export const clearLookupCache = () => {
   schoolOfThoughtsCache = null;
   countriesCache = null;
   citiesCache = null;
+  wafaqsCache = null;
+  nonCooperationTypesCache = null;
   provincesPromise = null;
   districtsPromise = null;
   schoolOfThoughtsPromise = null;
   countriesPromise = null;
   citiesPromise = null;
+  wafaqsPromise = null;
+  nonCooperationTypesPromise = null;
   isLoadingProvinces = false;
   isLoadingDistricts = false;
   isLoadingSchoolOfThoughts = false;
   isLoadingCountries = false;
   isLoadingCities = false;
+  isLoadingWafaqs = false;
+  isLoadingNonCooperationTypes = false;
 };
 
 /**
@@ -356,5 +460,19 @@ export const getCachedCountries = (): CountryOption[] | null => {
  */
 export const getCachedCities = (): CityOption[] | null => {
   return citiesCache;
+};
+
+/**
+ * Get cached wafaqs (returns null if not cached)
+ */
+export const getCachedWafaqs = (): WafaqOption[] | null => {
+  return wafaqsCache;
+};
+
+/**
+ * Get cached non-cooperation types (returns null if not cached)
+ */
+export const getCachedNonCooperationTypes = (): NonCooperationTypeOption[] | null => {
+  return nonCooperationTypesCache;
 };
 

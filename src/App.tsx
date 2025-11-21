@@ -23,6 +23,7 @@ const MadarisListPage = React.lazy(() => import('./pages/MadarisList'));
 const MadarisDetailsPage = React.lazy(() => import('./pages/MadarisDetails'));
 const NonCooperativePage = React.lazy(() => import('./pages/NonCooperativePage'));
 const ActionAgainstIllegalMadarisPage = React.lazy(() => import('./pages/ActionAgainstIllegalMadarisPage'));
+const SubjectsPage = React.lazy(() => import('./pages/Subjects'));
 const SafeCityDashboardPage = React.lazy(() => import('./pages/SafeCityDashboard'));
 const SafeCityListPage = React.lazy(() => import('./pages/SafeCityList'));
 const SafeCityDetailsPage = React.lazy(() => import('./pages/SafeCityDetails'));
@@ -167,6 +168,13 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <ActionAgainstIllegalMadarisPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/madaris/subjects" element={
+            <ProtectedRoute>
+              <Layout>
+                <SubjectsPage />
               </Layout>
             </ProtectedRoute>
           } />

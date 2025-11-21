@@ -17,6 +17,7 @@ interface SafeCityRecord {
   city_id: string;
   approval_date: string;
   present_status: string;
+  per_present_status?: number;
   no_of_total_cameras: number;
   active_cameras: number;
   inactive_cameras: number;
@@ -36,6 +37,7 @@ const buildInitialForm = (): SafeCityFormState => ({
   city_id: null,
   approval_date: '',
   present_status: '',
+  per_present_status: undefined,
   no_of_total_cameras: 0,
   active_cameras: 0,
   inactive_cameras: 0,
@@ -90,6 +92,7 @@ const SafeCityList: React.FC = () => {
           city_id: cityId,
           approval_date: item.approval_date || '',
           present_status: item.present_status || '',
+          per_present_status: item.per_present_status,
           no_of_total_cameras: item.no_of_total_cameras || 0,
           active_cameras: item.active_cameras || 0,
           inactive_cameras: item.inactive_cameras || 0,
@@ -144,7 +147,7 @@ const SafeCityList: React.FC = () => {
     setSubmitting(true);
 
     try {
-      const payload = {
+      const payload: any = {
         province_id: formData.province_id?._id || '',
         district_id: formData.district_id?._id || '',
         city_id: formData.city_id?._id || '',
@@ -158,6 +161,11 @@ const SafeCityList: React.FC = () => {
         no_of_employees: formData.no_of_employees,
         remarks: formData.remarks || '',
       };
+
+      // Only include per_present_status if status is "in progress"
+      if (formData.present_status === 'in progress' && formData.per_present_status !== undefined) {
+        payload.per_present_status = formData.per_present_status;
+      }
 
       if (editingId) {
         await api.put(`/safecity/update-safecitymain/${editingId}`, payload);
@@ -220,6 +228,7 @@ const SafeCityList: React.FC = () => {
       city_id: cityMatch || null,
       approval_date: record.approval_date,
       present_status: record.present_status,
+      per_present_status: record.per_present_status,
       no_of_total_cameras: record.no_of_total_cameras,
       active_cameras: record.active_cameras,
       inactive_cameras: record.inactive_cameras,
@@ -516,14 +525,14 @@ const SafeCityList: React.FC = () => {
                           <TableCell>
                             <span
                               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
-                                record.present_status === 'Active'
-                                  ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                                  : record.present_status === 'Inactive'
-                                  ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
-                                  : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
+                                record.present_status === 'in progress'
+                                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
+                                  : record.present_status === 'pending'
+                                  ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
+                                  : 'bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-300'
                               }`}
                             >
-                              {record.present_status}
+                              {record.present_status ? record.present_status.charAt(0).toUpperCase() + record.present_status.slice(1) : 'N/A'}
                             </span>
                           </TableCell>
                           <TableCell className="whitespace-nowrap text-center">

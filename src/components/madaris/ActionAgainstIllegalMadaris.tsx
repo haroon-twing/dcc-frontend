@@ -80,8 +80,8 @@ const ActionAgainstIllegalMadaris: React.FC<ActionAgainstIllegalMadarisProps> = 
       
       setRecords(records);
     } catch (err: any) {
-      console.error('Error fetching action against illegal madaris records:', err);
-      setError(err?.response?.data?.message || err?.message || 'Failed to load action against illegal madaris records');
+      console.error('Error fetching action against unregistered/non-cooperative madaris records:', err);
+      setError(err?.response?.data?.message || err?.message || 'Failed to load action against unregistered/non-cooperative madaris records');
       setRecords([]);
     } finally {
       setLoading(false);
@@ -225,11 +225,11 @@ const ActionAgainstIllegalMadaris: React.FC<ActionAgainstIllegalMadarisProps> = 
       setFormData(buildInitialForm());
       setEditingRecord(null);
     } catch (err: any) {
-      console.error('Error submitting action against illegal madaris record:', err);
+      console.error('Error submitting action against unregistered/non-cooperative madaris record:', err);
       alert(
         err?.response?.data?.message || 
         err?.message || 
-        `Failed to ${editingRecord ? 'update' : 'add'} action against illegal madaris record. Please try again.`
+        `Failed to ${editingRecord ? 'update' : 'add'} action against unregistered/non-cooperative madaris record. Please try again.`
       );
     } finally {
       setSubmitting(false);
@@ -254,11 +254,11 @@ const ActionAgainstIllegalMadaris: React.FC<ActionAgainstIllegalMadarisProps> = 
       
       await fetchRecords();
     } catch (error: any) {
-      console.error('Error deleting action against illegal madaris record:', error);
+      console.error('Error deleting action against unregistered/non-cooperative madaris record:', error);
       alert(
         error?.response?.data?.message || 
         error?.message || 
-        'Failed to delete action against illegal madaris record. Please try again.'
+        'Failed to delete action against unregistered/non-cooperative madaris record. Please try again.'
       );
     } finally {
       setDeleting(false);
@@ -271,9 +271,9 @@ const ActionAgainstIllegalMadaris: React.FC<ActionAgainstIllegalMadarisProps> = 
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Gavel className="h-5 w-5" />
-            Action Against Illegal Madaris
+            Action Against unregistered/non-cooperative Madaris
           </CardTitle>
-          <CardDescription>List of actions taken against illegal madaris</CardDescription>
+          <CardDescription>List of actions taken against unregistered/non-cooperative madaris</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
@@ -293,9 +293,9 @@ const ActionAgainstIllegalMadaris: React.FC<ActionAgainstIllegalMadarisProps> = 
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Gavel className="h-5 w-5" />
-            Action Against Illegal Madaris
+            Action Against unregistered/non-cooperative Madaris
           </CardTitle>
-          <CardDescription>List of actions taken against illegal madaris</CardDescription>
+          <CardDescription>List of actions taken against unregistered/non-cooperative madaris</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-red-600 dark:text-red-400">
@@ -314,9 +314,9 @@ const ActionAgainstIllegalMadaris: React.FC<ActionAgainstIllegalMadarisProps> = 
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Gavel className="h-5 w-5" />
-                Action Against Illegal Madaris
+                Action Against unregistered/non-cooperative Madaris
               </CardTitle>
-              <CardDescription>List of actions taken against illegal madaris</CardDescription>
+              <CardDescription>List of actions taken against unregistered/non-cooperative madaris</CardDescription>
             </div>
             <Button
               onClick={handleAdd}
@@ -324,7 +324,7 @@ const ActionAgainstIllegalMadaris: React.FC<ActionAgainstIllegalMadarisProps> = 
               className="flex items-center gap-2"
             >
               <Plus className="h-4 w-4" />
-              Add Action Against Illegal Madaris
+              Add Action Against unregistered/non-cooperative Madaris
             </Button>
           </div>
         </CardHeader>
@@ -412,8 +412,8 @@ const ActionAgainstIllegalMadaris: React.FC<ActionAgainstIllegalMadarisProps> = 
       formData={formData}
       setFormData={setFormData}
       onSubmit={handleSubmit}
-      title={isViewMode ? 'View Action Against Illegal Madaris Details' : editingRecord ? 'Edit Action Against Illegal Madaris' : 'Add Action Against Illegal Madaris'}
-      submitLabel={editingRecord ? 'Save Changes' : 'Add Action Against Illegal Madaris'}
+      title={isViewMode ? 'View Action Against unregistered/non-cooperative Madaris Details' : editingRecord ? 'Edit Action Against unregistered/non-cooperative Madaris' : 'Add Action Against unregistered/non-cooperative Madaris'}
+      submitLabel={editingRecord ? 'Save Changes' : 'Add Action Against unregistered/non-cooperative Madaris'}
       submitting={submitting || loadingRecord}
       viewMode={isViewMode}
     />
@@ -425,7 +425,7 @@ const ActionAgainstIllegalMadaris: React.FC<ActionAgainstIllegalMadarisProps> = 
       message={`Are you sure you want to delete "${recordToDeleteName}"? This action cannot be undone.`}
       onSubmit={handleDeleteSubmit}
       deleting={deleting}
-      title="Delete Action Against Illegal Madaris"
+      title="Delete Action Against unregistered/non-cooperative Madaris"
     />
     </>
   );

@@ -6,6 +6,7 @@ import { Button } from '../components/UI/Button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/UI/tabs';
 import { ArrowLeft, MapPin, Phone, Mail, Building, FileText, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { publicApi } from '../lib/api';
+import { fetchWafaqs, type WafaqOption } from '../lib/lookups';
 import MadarisTeachers from '../components/madaris/MadarisTeachers';
 import MadarisStudents from '../components/madaris/MadarisStudents';
 import VocationalSkills from '../components/madaris/VocationalSkills';
@@ -13,9 +14,10 @@ import TeachersSupportHE from '../components/madaris/TeachersSupportHE';
 import InternationalStandard from '../components/madaris/InternationalStandard';
 import BankAccounts from '../components/madaris/BankAccounts';
 import MeetingHeld from '../components/madaris/MeetingHeld';
-import SubjectsAddition from '../components/madaris/SubjectsAddition';
 import SubjectsUpdation from '../components/madaris/SubjectsUpdation';
 import Curriculum from '../components/madaris/Curriculum';
+import VocationalTraining from '../components/madaris/VocationalTraining';
+import FundingSource from '../components/madaris/FundingSource';
 
 const statusColors: Record<string, string> = {
   Active: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
@@ -55,6 +57,58 @@ const MadarisDetails: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [totalStudents, setTotalStudents] = useState<number>(0);
+  const [wafaqs, setWafaqs] = useState<WafaqOption[]>([]);
+
+  // Fetch wafaqs for lookup
+  useEffect(() => {
+    const loadWafaqs = async () => {
+      try {
+        const wafaqsData = await fetchWafaqs();
+        setWafaqs(wafaqsData);
+      } catch (error) {
+        console.error('Error loading wafaqs:', error);
+      }
+    };
+    loadWafaqs();
+  }, []);
+
+  // Update wafaq name when wafaqs are loaded and madaris data exists
+  useEffect(() => {
+    if (wafaqs.length > 0 && madarisData && madarisData.reg_from_wafaq) {
+      // Try to resolve the wafaq name if it's currently an ID or needs lookup
+      const currentValue = madarisData.reg_from_wafaq;
+      
+      // Check if current value is an ID that needs to be resolved
+      const wafaqById = wafaqs.find((w) => w._id === currentValue);
+      if (wafaqById && wafaqById.wafaq_name !== currentValue) {
+        // Update the wafaq name
+        setMadarisData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            reg_from_wafaq: wafaqById.wafaq_name,
+          };
+        });
+      } else {
+        // Check if it's a name that exists in wafaqs (already correct)
+        const wafaqByName = wafaqs.find((w) => w.wafaq_name === currentValue);
+        if (!wafaqByName && currentValue !== 'N/A') {
+          // If it's not found and not N/A, it might be an ID that wasn't found
+          // Try to look it up one more time
+          const foundWafaq = wafaqs.find((w) => w._id === currentValue);
+          if (foundWafaq) {
+            setMadarisData((prev) => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                reg_from_wafaq: foundWafaq.wafaq_name,
+              };
+            });
+          }
+        }
+      }
+    }
+  }, [wafaqs, madarisData]);
 
   useEffect(() => {
     const fetchMadarisDetails = async () => {
@@ -73,6 +127,43 @@ const MadarisDetails: React.FC = () => {
         const data = response.data?.data || response.data;
         
         if (data) {
+          // Determine wafaq name - could be stored as object, ID, or name string
+          let wafaqName = 'N/A';
+          
+          if (data.reg_from_wafaq) {
+            // Check if it's an object with wafaq_name or _id
+            if (typeof data.reg_from_wafaq === 'object' && data.reg_from_wafaq !== null) {
+              // If it's an object, use wafaq_name if available, or look up by _id
+              if (data.reg_from_wafaq.wafaq_name) {
+                wafaqName = data.reg_from_wafaq.wafaq_name;
+              } else if (data.reg_from_wafaq._id && wafaqs.length > 0) {
+                const wafaqById = wafaqs.find((w) => w._id === data.reg_from_wafaq._id);
+                wafaqName = wafaqById?.wafaq_name || 'N/A';
+              }
+            } else if (typeof data.reg_from_wafaq === 'string') {
+              // If it's a string, check if it's an ID or a name
+              if (wafaqs.length > 0) {
+                // First check if it's an ID
+                const wafaqById = wafaqs.find((w) => w._id === data.reg_from_wafaq);
+                if (wafaqById) {
+                  wafaqName = wafaqById.wafaq_name;
+                } else {
+                  // Check if it's already a name by matching
+                  const wafaqByName = wafaqs.find((w) => w.wafaq_name === data.reg_from_wafaq);
+                  if (wafaqByName) {
+                    wafaqName = wafaqByName.wafaq_name;
+                  } else {
+                    // Use the value as-is (might already be a name)
+                    wafaqName = data.reg_from_wafaq;
+                  }
+                }
+              } else {
+                // Wafaqs not loaded yet, use the value as-is
+                wafaqName = data.reg_from_wafaq;
+              }
+            }
+          }
+          
           setMadarisData({
             name: data.name || 'N/A',
             reg_no: data.reg_no || 'N/A',
@@ -82,7 +173,7 @@ const MadarisDetails: React.FC = () => {
             phone: data.phone || 'N/A',
             email: data.email || undefined,
             is_reg: Boolean(data.is_reg),
-            reg_from_wafaq: data.reg_from_wafaq || 'N/A',
+            reg_from_wafaq: wafaqName,
             school_of_thought: data.school_of_thought || 'N/A',
             status: data.status || 'active',
             cooperative: Boolean(data.cooperative ?? data.cooperation_status), // Support both for backward compatibility
@@ -109,7 +200,7 @@ const MadarisDetails: React.FC = () => {
     };
 
     fetchMadarisDetails();
-  }, [madarisId]);
+  }, [madarisId, wafaqs]);
 
   // Fetch students data to calculate total students
   useEffect(() => {
@@ -371,9 +462,9 @@ const MadarisDetails: React.FC = () => {
           {/* Row 2 */}
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="meeting-held">Meeting Held</TabsTrigger>
-            <TabsTrigger value="subjects-addition">Subjects Addition</TabsTrigger>
-            <TabsTrigger value="subjects-updation">Subjects Updation</TabsTrigger>
             <TabsTrigger value="curriculum">Curriculum</TabsTrigger>
+            <TabsTrigger value="vocational-training">Vocational Training</TabsTrigger>
+            <TabsTrigger value="funding-source">Funding Source</TabsTrigger>
         </TabsList>
         </div>
         <TabsContent value="teachers" className="mt-4">
@@ -397,14 +488,17 @@ const MadarisDetails: React.FC = () => {
         <TabsContent value="meeting-held" className="mt-4">
           <MeetingHeld madarisId={madarisId || ''} />
         </TabsContent>
-        <TabsContent value="subjects-addition" className="mt-4">
-          <SubjectsAddition madarisId={madarisId || ''} />
-        </TabsContent>
         <TabsContent value="subjects-updation" className="mt-4">
           <SubjectsUpdation madarisId={madarisId || ''} />
         </TabsContent>
         <TabsContent value="curriculum" className="mt-4">
           <Curriculum madarisId={madarisId || ''} />
+        </TabsContent>
+        <TabsContent value="vocational-training" className="mt-4">
+          <VocationalTraining madarisId={madarisId || ''} />
+        </TabsContent>
+        <TabsContent value="funding-source" className="mt-4">
+          <FundingSource madarisId={madarisId || ''} />
         </TabsContent>
       </Tabs>
 

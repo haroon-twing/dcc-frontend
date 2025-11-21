@@ -12,13 +12,10 @@ import ThreatAlerts from '../components/safecity/ThreatAlerts';
 import PoliceStationConnectivity from '../components/safecity/PoliceStationConnectivity';
 
 const statusColors: Record<string, string> = {
-  Active: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
-  Inactive: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
-  Pending: 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200',
-  'Under Maintenance': 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200',
-  active: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
-  inactive: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
-  pending: 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200',
+  'in progress': 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300',
+  'pending': 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300',
+  'Pending': 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300',
+  'In Progress': 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300',
 };
 
 interface SafeCityData {
@@ -27,6 +24,7 @@ interface SafeCityData {
   city: string;
   approval_date: string;
   present_status: string;
+  per_present_status?: number;
   no_of_total_cameras: number;
   active_cameras: number;
   inactive_cameras: number;
@@ -96,6 +94,7 @@ const SafeCityDetails: React.FC = () => {
             city: city?.name || record.city_id?.name || record.city_id || '-',
             approval_date: record.approval_date || '',
             present_status: record.present_status || '',
+            per_present_status: record.per_present_status,
             no_of_total_cameras: record.no_of_total_cameras || 0,
             active_cameras: record.active_cameras || 0,
             inactive_cameras: record.inactive_cameras || 0,
@@ -279,6 +278,12 @@ const SafeCityDetails: React.FC = () => {
                 {formatStatus(safeCityData.present_status)}
               </span>
             </div>
+            {safeCityData.present_status === 'in progress' && safeCityData.per_present_status !== undefined && (
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Progress Percentage</p>
+                <p className="text-base text-foreground font-medium">{safeCityData.per_present_status}%</p>
+              </div>
+            )}
             <div className="space-y-1">
               <p className="text-sm font-medium text-muted-foreground">Total Cameras</p>
               <p className="text-base text-foreground font-medium">{safeCityData.no_of_total_cameras}</p>

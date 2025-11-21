@@ -7,12 +7,14 @@ import { publicApi } from '../../lib/api';
 import api from '../../lib/api';
 import NonCooperativeFormModal from '../modals/madaris/NonCooperativeFormModal';
 import DeleteModal from '../UI/DeleteModal';
+import { fetchNonCooperationTypes, NonCooperationTypeOption } from '../../lib/lookups';
 
 interface NonCooperative {
   _id?: string;
   id?: string;
   role_of_institute: string;
-  nature_of_non_cooperation: string;
+  nature_of_non_cooperation: string; // Stores ID
+  nature_of_non_cooperation_name?: string; // Stores display name
   remarks: string;
 }
 
@@ -40,6 +42,8 @@ const NonCooperative: React.FC<NonCooperativeProps> = ({ madarisId }) => {
   const [recordToDeleteId, setRecordToDeleteId] = useState<string | number | undefined>(undefined);
   const [recordToDeleteName, setRecordToDeleteName] = useState<string>('');
   const [deleting, setDeleting] = useState<boolean>(false);
+  const [nonCooperationTypes, setNonCooperationTypes] = useState<NonCooperationTypeOption[]>([]);
+  const [loadingNonCooperationTypes, setLoadingNonCooperationTypes] = useState<boolean>(false);
   
   const buildInitialForm = (): NonCooperativeFormState => ({
     role_of_institute: '',
@@ -62,13 +66,21 @@ const NonCooperative: React.FC<NonCooperativeProps> = ({ madarisId }) => {
       const response = await publicApi.get(endpoint);
       const data = response.data?.data || response.data || [];
       
-      const records: NonCooperative[] = data.map((item: any) => ({
-        _id: item._id || item.id,
-        id: item._id || item.id,
-        role_of_institute: item.role_of_institute || 'N/A',
-        nature_of_non_cooperation: item.nature_of_non_cooperation || 'N/A',
-        remarks: item.remarks || '',
-      }));
+      const records: NonCooperative[] = data.map((item: any) => {
+        // Map nature_of_non_cooperation ID to name
+        const natureId = item.nature_of_non_cooperation;
+        const natureType = nonCooperationTypes.find(type => type._id === natureId);
+        const natureName = natureType ? natureType.value : (item.nature_of_non_cooperation || 'N/A');
+        
+        return {
+          _id: item._id || item.id,
+          id: item._id || item.id,
+          role_of_institute: item.role_of_institute || 'N/A',
+          nature_of_non_cooperation: natureId, // Store ID for form
+          nature_of_non_cooperation_name: natureName, // Store name for display
+          remarks: item.remarks || '',
+        };
+      });
       
       setRecords(records);
     } catch (err: any) {
@@ -81,8 +93,26 @@ const NonCooperative: React.FC<NonCooperativeProps> = ({ madarisId }) => {
   };
 
   useEffect(() => {
-    fetchRecords();
-  }, [madarisId]);
+    if (nonCooperationTypes.length > 0) {
+      fetchRecords();
+    }
+  }, [madarisId, nonCooperationTypes]);
+
+  useEffect(() => {
+    const loadNonCooperationTypes = async () => {
+      try {
+        setLoadingNonCooperationTypes(true);
+        const types = await fetchNonCooperationTypes();
+        setNonCooperationTypes(types);
+      } catch (err: any) {
+        console.error('Error fetching non-cooperation types:', err);
+        setNonCooperationTypes([]);
+      } finally {
+        setLoadingNonCooperationTypes(false);
+      }
+    };
+    loadNonCooperationTypes();
+  }, []);
 
   const handleView = async (record: NonCooperative) => {
     const recordId = record._id || record.id;
@@ -101,9 +131,16 @@ const NonCooperative: React.FC<NonCooperativeProps> = ({ madarisId }) => {
       const response = await publicApi.get(viewEndpoint);
       const recordData = response.data?.data || response.data;
 
+      // Map nature_of_non_cooperation to ID if it's a name, or use the ID directly
+      const natureId = recordData.nature_of_non_cooperation;
+      const natureType = nonCooperationTypes.find(type => 
+        type._id === natureId || type.value === natureId
+      );
+      const mappedNatureId = natureType ? natureType._id : natureId;
+      
       setFormData({
         role_of_institute: recordData.role_of_institute || '',
-        nature_of_non_cooperation: recordData.nature_of_non_cooperation || '',
+        nature_of_non_cooperation: mappedNatureId || '',
         remarks: recordData.remarks || '',
       });
       
@@ -116,9 +153,14 @@ const NonCooperative: React.FC<NonCooperativeProps> = ({ madarisId }) => {
         'Failed to load record details. Please try again.'
       );
       // Fallback to existing data
+      const natureType = nonCooperationTypes.find(type => 
+        type._id === record.nature_of_non_cooperation || type.value === record.nature_of_non_cooperation
+      );
+      const mappedNatureId = natureType ? natureType._id : record.nature_of_non_cooperation;
+      
       setFormData({
         role_of_institute: record.role_of_institute || '',
-        nature_of_non_cooperation: record.nature_of_non_cooperation || '',
+        nature_of_non_cooperation: mappedNatureId || '',
         remarks: record.remarks || '',
       });
       setShowModal(true);
@@ -131,9 +173,16 @@ const NonCooperative: React.FC<NonCooperativeProps> = ({ madarisId }) => {
     setEditingRecord(record);
     setViewingRecord(null);
     setIsViewMode(false);
+    // Ensure we use the ID for the form
+    const natureId = record.nature_of_non_cooperation;
+    const natureType = nonCooperationTypes.find(type => 
+      type._id === natureId || type.value === natureId
+    );
+    const mappedNatureId = natureType ? natureType._id : natureId;
+    
     setFormData({
       role_of_institute: record.role_of_institute || '',
-      nature_of_non_cooperation: record.nature_of_non_cooperation || '',
+      nature_of_non_cooperation: mappedNatureId || '',
       remarks: record.remarks || '',
     });
     setShowModal(true);
@@ -302,7 +351,13 @@ const NonCooperative: React.FC<NonCooperativeProps> = ({ madarisId }) => {
                   records.map((record) => (
                     <TableRow key={record._id || record.id}>
                       <TableCell className="font-medium">{record.role_of_institute || 'N/A'}</TableCell>
-                      <TableCell>{record.nature_of_non_cooperation || 'N/A'}</TableCell>
+                      <TableCell>
+                        {record.nature_of_non_cooperation_name || 
+                         (() => {
+                           const natureType = nonCooperationTypes.find(type => type._id === record.nature_of_non_cooperation);
+                           return natureType ? natureType.value : (record.nature_of_non_cooperation || 'N/A');
+                         })()}
+                      </TableCell>
                       <TableCell className="max-w-xs truncate" title={record.remarks}>
                         {record.remarks || 'N/A'}
                       </TableCell>
@@ -364,6 +419,8 @@ const NonCooperative: React.FC<NonCooperativeProps> = ({ madarisId }) => {
       submitLabel={editingRecord ? 'Save Changes' : 'Add Non Cooperative'}
       submitting={submitting || loadingRecord}
       viewMode={isViewMode}
+      nonCooperationTypes={nonCooperationTypes}
+      loadingNonCooperationTypes={loadingNonCooperationTypes}
     />
 
     <DeleteModal
