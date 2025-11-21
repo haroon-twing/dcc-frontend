@@ -170,24 +170,7 @@ const MajorHawalaHundiDealerDetails: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Status</p>
-                <div className="flex items-center">
-                  {dealerData.is_active ? (
-                    <>
-                      <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
-                      <span>Active</span>
-                    </>
-                  ) : (
-                    <>
-                      <div className="h-2 w-2 rounded-full bg-red-500 mr-2"></div>
-                      <span>Inactive</span>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {dealerData.remarks && (
+{dealerData.remarks && (
                 <div className="space-y-2 md:col-span-2">
                   <p className="text-sm font-medium text-muted-foreground">Remarks</p>
                   <p className="text-foreground whitespace-pre-line">{dealerData.remarks}</p>

@@ -89,8 +89,8 @@ const ArmsExplosivesUreaEdit: React.FC = () => {
       setSaving(true);
       await api.put(`/ispec-arms-explosives/update-ispec-arms-explosives/${id}`, formData);
       
-      // Navigate to view page after successful update
-      navigate(`/illegal-spectrum/arms-explosives-urea/view/${id}`);
+      // Navigate back to the list view after successful update
+      navigate('/illegal-spectrum/arms-explosives-urea');
     } catch (err: any) {
       console.error('Error updating record:', err);
       setError(err?.response?.data?.message || 'Failed to update record. Please try again.');
