@@ -65,8 +65,23 @@ const IllegalSimsDetailsPage = React.lazy(() => import('./pages/IllegalSimsDetai
 const PrevalenceOfOutOfZoneSimsDetailsPage = React.lazy(() => import('./pages/PrevalenceOfOutOfZoneSimsDetails'));
 const IllegalWarehousesPage = React.lazy(() => import('./pages/IllegalWarehouses'));
 const NCPVehiclesPage = React.lazy(() => import('./pages/NCPVehicles'));
+// const NCPVehiclesView = React.lazy(() => import('./pages/NCPVehiclesView'));
+
+// const NCPVehicleDatabaseView = React.lazy(() => import('./pages/NCPVehicleDatabaseView'));
+
+// const NCPVehicleRecoveryView = React.lazy(() => import('./pages/NCPVehicleRecoveryView'));
+
+// const NCPStatusByDistrictView = React.lazy(() => import('./pages/NCPStatusByDistrictView'));
 const HumanTraffickingPage = React.lazy(() => import('./pages/HumanTrafficking'));
+// const HumanTraffickingDetailsPage = React.lazy(() => import('./pages/HumanTraffickingDetails'));
+
+// const ActionsTakenAgainstIllegalWarehousesView = React.lazy(() => import('./pages/ActionsTakenAgainstIllegalWarehousesView'));
+
+// const IllegalWarehousesView = React.lazy(() => import('./pages/IllegalWarehousesView'));
+
+// const MajorModesAndMotivationsView = React.lazy(() => import('./pages/MajorModesAndMotivationsView'));
 const SmugglingPage = React.lazy(() => import('./pages/Smuggling'));
+const SmugglingView = React.lazy(() => import('./pages/SmugglingView'));
 const HawalaHundiPage = React.lazy(() => import('./pages/HawalaHundi'));
 const HawalaHundiDetailsPage = React.lazy(() => import('./pages/HawalaHundiDetails'));
 const MajorHawalaHundiDealerDetailsPage = React.lazy(() => import('./pages/MajorHawalaHundiDealerDetails'));
@@ -473,12 +488,26 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
+          
           <Route path="/illegal-spectrum/smuggling" element={
             <ProtectedRoute>
               <Layout>
                 <SmugglingPage />
               </Layout>
             </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/smuggling/view/:id" element={
+
+            <ProtectedRoute>
+
+              <Layout>
+
+                <SmugglingView />
+
+              </Layout>
+
+            </ProtectedRoute>
+
           } />
           <Route path="/illegal-spectrum/hawala-hundi" element={
             <ProtectedRoute>
