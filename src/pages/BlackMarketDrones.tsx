@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Edit, Trash2 } from 'lucide-react';
+import { Eye, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Edit, Trash2, Pencil } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/UI/Table';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/UI/card';
 import { Button } from '../components/UI/Button';
@@ -14,6 +14,7 @@ import api from '../lib/api';
 
 interface BlackMarketDronesRecord {
   id: string;
+  _id?: string; // Add optional _id field for MongoDB compatibility
   is_identification_of_agencies: boolean;
   is_db_vendor_formed: boolean;
 }
@@ -48,10 +49,16 @@ const BlackMarketDrones: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // TODO: Replace with actual API endpoint when available
-        // const response = await publicApi.get('/get-all-black-market-drones');
-        // For now, using empty array
-        setRecords([]);
+        const response = await publicApi.get('/ispec-blackmarket-drone-nvd/get-all-ispec-blackmarket-drone-nvd');
+        const data = response.data?.data || response.data || [];
+        
+        const formattedRecords: BlackMarketDronesRecord[] = data.map((item: any) => ({
+          id: item._id || item.id,
+          is_identification_of_agencies: Boolean(item.is_identification_of_agencies),
+          is_db_vendor_formed: Boolean(item.is_db_vendor_formed),
+        }));
+        
+        setRecords(formattedRecords);
       } catch (error) {
         console.error('Error fetching black market drones records:', error);
         setRecords([]);
@@ -73,20 +80,23 @@ const BlackMarketDrones: React.FC = () => {
         is_db_vendor_formed: formData.is_db_vendor_formed,
       };
 
-      let response;
       if (editingId) {
-        // TODO: Replace with actual API endpoint when available
-        // response = await api.put(`/update-black-market-drones/${editingId}`, payload);
-        console.log('Update black market drones:', editingId, payload);
+        await api.put(`/ispec-blackmarket-drone-nvd/update-ispec-blackmarket-drone-nvd/${editingId}`, payload);
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // response = await api.post('/add-black-market-drones', payload);
-        console.log('Add black market drones:', payload);
+        await api.post('/ispec-blackmarket-drone-nvd/add-ispec-blackmarket-drone-nvd', payload);
       }
 
-      // TODO: Refresh the list after successful submission
-      // const recordsResponse = await publicApi.get('/get-all-black-market-drones');
-      // Process and set records
+      // Refresh the list after successful submission
+      const response = await publicApi.get('/ispec-blackmarket-drone-nvd/get-all-ispec-blackmarket-drone-nvd');
+      const data = response.data?.data || response.data || [];
+      
+      const formattedRecords: BlackMarketDronesRecord[] = data.map((item: any) => ({
+        id: item._id || item.id,
+        is_identification_of_agencies: Boolean(item.is_identification_of_agencies),
+        is_db_vendor_formed: Boolean(item.is_db_vendor_formed),
+      }));
+      
+      setRecords(formattedRecords);
 
       // Close modal and reset form
       setShowAddModal(false);
@@ -120,30 +130,45 @@ const BlackMarketDrones: React.FC = () => {
     setShowAddModal(true);
   };
 
+  const handleView = (record: BlackMarketDronesRecord) => {
+    const recordId = record._id || record.id;
+    if (recordId) {
+      navigate(`/illegal-spectrum/black-market-drones/details?id=${recordId}`);
+    } else {
+      // Fallback to modal if no ID is available
+      setViewingId(record.id);
+      setEditingId(null);
+      setFormData({
+        id: record.id,
+        is_identification_of_agencies: record.is_identification_of_agencies,
+        is_db_vendor_formed: record.is_db_vendor_formed,
+      });
+      setShowAddModal(true);
+    }
+  };
+
   const openViewModal = (record: BlackMarketDronesRecord) => {
-    setViewingId(record.id);
-    setEditingId(null);
-    setFormData({
-      id: record.id,
-      is_identification_of_agencies: record.is_identification_of_agencies,
-      is_db_vendor_formed: record.is_db_vendor_formed,
-    });
-    setShowAddModal(true);
+    navigate(`/illegal-spectrum/black-market-drones/details?id=${record.id}`);
   };
 
   const handleDeleteSubmit = async (id: string | number) => {
     setDeleting(true);
 
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/delete-black-market-drones/${id}`);
-      console.log('Delete black market drones:', id);
+      await api.delete(`/ispec-blackmarket-drone-nvd/delete-ispec-blackmarket-drone-nvd/${id}`);
 
-      // TODO: Refresh the list after successful deletion
-      // const recordsResponse = await publicApi.get('/get-all-black-market-drones');
-      // Process and set records
-
-      // Close modal
+      // Refresh the list after successful deletion
+      const response = await publicApi.get('/ispec-blackmarket-drone-nvd/get-all-ispec-blackmarket-drone-nvd');
+      const data = response.data?.data || response.data || [];
+      
+      const formattedRecords: BlackMarketDronesRecord[] = data.map((item: any) => ({
+        id: item._id || item.id,
+        is_identification_of_agencies: Boolean(item.is_identification_of_agencies),
+        is_db_vendor_formed: Boolean(item.is_db_vendor_formed),
+      }));
+      
+      setRecords(formattedRecords);
+      
       setDeleteTargetId(null);
       setDeleteTargetName(null);
     } catch (error: any) {
@@ -333,30 +358,35 @@ const BlackMarketDrones: React.FC = () => {
                         {getDisplayValue(record.is_db_vendor_formed)}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => openViewModal(record)}
-                          className="text-muted-foreground hover:text-foreground"
+                          className="h-8 w-8 p-0"
+                          title="View"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="secondary"
+                          variant="ghost"
                           size="sm"
                           onClick={() => openEditModal(record)}
+                          className="h-8 w-8 p-0"
+                          title="Edit"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="destructive"
+                          variant="ghost"
                           size="sm"
                           onClick={() => {
                             setDeleteTargetId(record.id);
                             setDeleteTargetName(`Black Market Drones Record ${record.id}`);
                           }}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                          title="Delete"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -465,7 +495,7 @@ const BlackMarketDrones: React.FC = () => {
           }
         }}
         id={deleteTargetId}
-        message={`Are you sure you want to delete "${deleteTargetName}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete this record? This action cannot be undone.`}
         onSubmit={handleDeleteSubmit}
         deleting={deleting}
         title="Delete Black Market Drones Record"

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../UI/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../UI/Table';
 import { Button } from '../UI/Button';
@@ -36,6 +37,7 @@ export interface ActionsTakenAgainstIllegalWarehousesFormState {
 }
 
 const ActionsTakenAgainstIllegalWarehouses: React.FC<ActionsTakenAgainstIllegalWarehousesProps> = ({ illegalWarehousesId }) => {
+  const navigate = useNavigate();
   const [records, setRecords] = useState<ActionsTakenAgainstIllegalWarehouses[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -71,18 +73,14 @@ const ActionsTakenAgainstIllegalWarehouses: React.FC<ActionsTakenAgainstIllegalW
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      // const endpoint = illegalWarehousesId
-      //   ? `/illegal-warehouses/get-all-actions-taken/${illegalWarehousesId}`
-      //   : '/illegal-warehouses/get-all-actions-taken';
-      // const response = await publicApi.get(endpoint);
-      // const data = response.data?.data || response.data || [];
+      const response = await publicApi.get('/ispec-ill-whouse-action-taken/get-all-ispec-ill-whouse-action-taken');
       
-      // For now, using empty array
-      const data: any[] = [];
-      
-      const records: ActionsTakenAgainstIllegalWarehouses[] = data.map((item: any) => ({
-        _id: item._id || item.id,
+      // Handle different response structures (array or object with data property)
+      const responseData = Array.isArray(response.data)
+        ? response.data
+        : response.data?.data || [];
+
+      const records = responseData.map((item: any) => ({
         id: item._id || item.id,
         action_taken_by: item.action_taken_by || '',
         date_of_action: item.date_of_action || '',
@@ -134,26 +132,12 @@ const ActionsTakenAgainstIllegalWarehouses: React.FC<ActionsTakenAgainstIllegalW
     setShowModal(true);
   };
 
-  const handleView = async (record: ActionsTakenAgainstIllegalWarehouses) => {
+  const handleView = (record: ActionsTakenAgainstIllegalWarehouses) => {
     const recordId = record._id || record.id;
     if (!recordId) {
       return;
     }
-
-    setViewingRecord(record);
-    setEditingRecord(null);
-    setIsViewMode(true);
-    setFormData({
-      id: recordId,
-      action_taken_by: record.action_taken_by,
-      date_of_action: formatDateForInput(record.date_of_action),
-      type: record.type,
-      location: record.location,
-      main_products: record.main_products,
-      affiliated_terr_grp: record.affiliated_terr_grp,
-      remarks: record.remarks,
-    });
-    setShowModal(true);
+    navigate(`/illegal-spectrum/actions-taken-against-illegal-warehouses/view/${recordId}`);
   };
 
   const handleEdit = (record: ActionsTakenAgainstIllegalWarehouses) => {
@@ -177,7 +161,7 @@ const ActionsTakenAgainstIllegalWarehouses: React.FC<ActionsTakenAgainstIllegalW
   const handleDelete = (record: ActionsTakenAgainstIllegalWarehouses) => {
     const recordId = record._id || record.id;
     setRecordToDeleteId(recordId);
-    setRecordToDeleteName(`${record.location} - ${formatDate(record.date_of_action)}`);
+    setRecordToDeleteName('this record');
     setShowDeleteModal(true);
   };
 
@@ -198,13 +182,11 @@ const ActionsTakenAgainstIllegalWarehouses: React.FC<ActionsTakenAgainstIllegalW
       };
 
       if (editingRecord) {
-        // TODO: Replace with actual API endpoint when available
-        // await api.put(`/illegal-warehouses/update-action-taken/${formData.id}`, payload);
-        console.log('Update action taken against illegal warehouse:', formData.id, payload);
+        await api.put(`/ispec-ill-whouse-action-taken/update-ispec-ill-whouse-action-taken/${formData.id}`, payload);
+        window.alert('Action taken against illegal warehouse updated successfully!');
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // await api.post('/illegal-warehouses/add-action-taken', payload);
-        console.log('Add action taken against illegal warehouse:', payload);
+        await api.post('/ispec-ill-whouse-action-taken/add-ispec-ill-whouse-action-taken', payload);
+        window.alert('Action taken against illegal warehouse added successfully!');
       }
 
       await fetchRecords();
@@ -229,9 +211,8 @@ const ActionsTakenAgainstIllegalWarehouses: React.FC<ActionsTakenAgainstIllegalW
     setDeleting(true);
 
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/illegal-warehouses/delete-action-taken/${id}`);
-      console.log('Delete action taken against illegal warehouse:', id);
+      await api.delete(`/ispec-ill-whouse-action-taken/delete-ispec-ill-whouse-action-taken/${id}`);
+      window.alert('Action taken against illegal warehouse deleted successfully!');
 
       await fetchRecords();
       setShowDeleteModal(false);
@@ -533,7 +514,7 @@ const ActionsTakenAgainstIllegalWarehouses: React.FC<ActionsTakenAgainstIllegalW
         open={showDeleteModal}
         onOpenChange={setShowDeleteModal}
         id={recordToDeleteId}
-        message={`Are you sure you want to delete "${recordToDeleteName}"? This action cannot be undone.`}
+        message="Are you sure you want to delete this record? This action cannot be undone."
         onSubmit={handleDeleteSubmit}
         deleting={deleting}
         title="Delete Action Taken Against Illegal Warehouse"

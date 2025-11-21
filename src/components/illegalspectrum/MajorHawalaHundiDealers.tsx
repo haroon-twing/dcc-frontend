@@ -348,28 +348,19 @@ const MajorHawalaHundiDealers: React.FC<MajorHawalaHundiDealersProps> = ({ hawal
                     {getSortIcon('affiliation_tgt_grp')}
                   </button>
                 </TableHead>
-                <TableHead>
-                  <button
-                    onClick={() => handleSort('is_active')}
-                    className="flex items-center hover:text-foreground transition-colors"
-                  >
-                    Active
-                    {getSortIcon('is_active')}
-                  </button>
-                </TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="py-6 text-center text-muted-foreground">
                     Loading major hawala/hundi dealers...
                   </TableCell>
                 </TableRow>
               ) : filteredAndSortedRecords.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="py-6 text-center text-muted-foreground">
                     {searchTerm ? 'No records found matching your search.' : 'No major hawala/hundi dealers found.'}
                   </TableCell>
                 </TableRow>
@@ -380,15 +371,6 @@ const MajorHawalaHundiDealers: React.FC<MajorHawalaHundiDealersProps> = ({ hawal
                     <TableCell>{record.present_residence || '-'}</TableCell>
                     <TableCell>{record.domicile || '-'}</TableCell>
                     <TableCell>{record.affiliation_tgt_grp || '-'}</TableCell>
-                    <TableCell>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        record.is_active
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                          : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
-                      }`}>
-                        {getDisplayValue(record.is_active)}
-                      </span>
-                    </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-2">
                         <Button

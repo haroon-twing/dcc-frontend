@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Edit, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/UI/Table';
@@ -42,7 +42,6 @@ const HumanTrafficking: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState<HumanTraffickingFormState>(buildInitialForm());
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [viewingId, setViewingId] = useState<string | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [deleteTargetName, setDeleteTargetName] = useState<string | null>(null);
   const [records, setRecords] = useState<HumanTraffickingRecord[]>([]);
@@ -57,24 +56,50 @@ const HumanTrafficking: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        // TODO: Replace with actual API endpoint when available
-        // const response = await publicApi.get('/get-all-human-trafficking');
-        // For now, using empty array
-        setRecords([]);
-      } catch (error) {
-        console.error('Error fetching human trafficking records:', error);
-        setRecords([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchRecords = useCallback(async () => {
+    try {
+      setLoading(true);
+      console.log('Fetching human trafficking records...');
 
-    fetchData();
+      const response = await publicApi.get('/ispec-human-traff/get-all-ispec-human-traff');
+      console.log('Human trafficking API response:', response);
+
+      let data = response.data;
+      if (Array.isArray(data)) {
+        data = { data };
+      }
+
+      const recordsData = data.data || data || [];
+      const mappedRecords: HumanTraffickingRecord[] = recordsData.map((item: any) => ({
+        id: String(item._id || item.id || ''),
+        is_db_formed: Boolean(item.is_db_formed),
+        no_ops_launch_against_ht_networks: Number(item.no_ops_launch_against_ht_networks) || 0,
+        no_indv_appr_during_ops: Number(item.no_indv_appr_during_ops) || 0,
+        no_indv_neut_during_ops: Number(item.no_indv_neut_during_ops) || 0,
+        no_indv_appr_ht_charges_convicted: Number(item.no_indv_appr_ht_charges_convicted) || 0,
+        no_indv_appr_ht_charges_setfreebycourt: Number(item.no_indv_appr_ht_charges_setfreebycourt) || 0,
+        no_indv_appr_ht_charges_pendingcases: Number(item.no_indv_appr_ht_charges_pendingcases) || 0,
+        is_mthly_trend_anal_report_prep: Boolean(item.is_mthly_trend_anal_report_prep),
+        remarks: item.remarks || '',
+      }));
+
+      setRecords(mappedRecords);
+    } catch (error: any) {
+      console.error('Error fetching human trafficking records:', error);
+      window.alert(
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to load human trafficking records. Please try again.'
+      );
+      setRecords([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchRecords();
+  }, [fetchRecords]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,18 +120,18 @@ const HumanTrafficking: React.FC = () => {
 
       let response;
       if (editingId) {
-        // TODO: Replace with actual API endpoint when available
-        // response = await api.put(`/update-human-trafficking/${editingId}`, payload);
-        console.log('Update human trafficking:', editingId, payload);
+        console.log('Updating human trafficking record:', editingId, payload);
+        response = await api.put(`/ispec-human-traff/update-ispec-human-traff/${editingId}`, payload);
+        console.log('Update human trafficking response:', response);
+        window.alert('Human trafficking record updated successfully!');
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // response = await api.post('/add-human-trafficking', payload);
-        console.log('Add human trafficking:', payload);
+        console.log('Adding human trafficking record:', payload);
+        response = await api.post('/ispec-human-traff/add-ispec-human-traff', payload);
+        console.log('Add human trafficking response:', response);
+        window.alert('Human trafficking record added successfully!');
       }
 
-      // TODO: Refresh the list after successful submission
-      // const recordsResponse = await publicApi.get('/get-all-human-trafficking');
-      // Process and set records
+      await fetchRecords();
 
       // Close modal and reset form
       setShowAddModal(false);
@@ -126,14 +151,12 @@ const HumanTrafficking: React.FC = () => {
 
   const openCreateModal = () => {
     setEditingId(null);
-    setViewingId(null);
     setFormData(buildInitialForm());
     setShowAddModal(true);
   };
 
   const openEditModal = (record: HumanTraffickingRecord) => {
     setEditingId(record.id);
-    setViewingId(null);
     setFormData({
       id: record.id,
       is_db_formed: record.is_db_formed,
@@ -149,39 +172,29 @@ const HumanTrafficking: React.FC = () => {
     setShowAddModal(true);
   };
 
-  const openViewModal = (record: HumanTraffickingRecord) => {
-    setViewingId(record.id);
-    setEditingId(null);
-    setFormData({
-      id: record.id,
-      is_db_formed: record.is_db_formed,
-      no_ops_launch_against_ht_networks: record.no_ops_launch_against_ht_networks,
-      no_indv_appr_during_ops: record.no_indv_appr_during_ops,
-      no_indv_neut_during_ops: record.no_indv_neut_during_ops,
-      no_indv_appr_ht_charges_convicted: record.no_indv_appr_ht_charges_convicted,
-      no_indv_appr_ht_charges_setfreebycourt: record.no_indv_appr_ht_charges_setfreebycourt,
-      no_indv_appr_ht_charges_pendingcases: record.no_indv_appr_ht_charges_pendingcases,
-      is_mthly_trend_anal_report_prep: record.is_mthly_trend_anal_report_prep,
-      remarks: record.remarks,
-    });
-    setShowAddModal(true);
+  const handleView = (record: HumanTraffickingRecord) => {
+    const recordId = record.id;
+    if (!recordId) {
+      window.alert('Record ID is required to view details');
+      return;
+    }
+    navigate(`/illegal-spectrum/human-trafficking/details/${recordId}`);
   };
 
   const handleDeleteSubmit = async (id: string | number) => {
     setDeleting(true);
 
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/delete-human-trafficking/${id}`);
-      console.log('Delete human trafficking:', id);
+      console.log('Deleting human trafficking record:', id);
+      await api.delete(`/ispec-human-traff/delete-ispec-human-traff/${id}`);
+      console.log('Delete human trafficking response: success');
 
-      // TODO: Refresh the list after successful deletion
-      // const recordsResponse = await publicApi.get('/get-all-human-trafficking');
-      // Process and set records
+      await fetchRecords();
 
       // Close modal
       setDeleteTargetId(null);
       setDeleteTargetName(null);
+      window.alert('Human trafficking record deleted successfully!');
     } catch (error: any) {
       console.error('Error deleting human trafficking record:', error);
       alert(
@@ -194,11 +207,7 @@ const HumanTrafficking: React.FC = () => {
     }
   };
 
-  const modalTitle = viewingId
-    ? 'View Human Trafficking Record'
-    : editingId
-    ? 'Edit Human Trafficking Record'
-    : 'Add Human Trafficking Record';
+  const modalTitle = editingId ? 'Edit Human Trafficking Record' : 'Add Human Trafficking Record';
   const submitLabel = editingId ? 'Save Changes' : 'Add Human Trafficking Record';
 
   // Filter and sort data
@@ -404,7 +413,7 @@ const HumanTrafficking: React.FC = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => openViewModal(record)}
+                          onClick={() => handleView(record)}
                           className="text-muted-foreground hover:text-foreground"
                         >
                           <Eye className="h-4 w-4" />
@@ -421,7 +430,7 @@ const HumanTrafficking: React.FC = () => {
                           size="sm"
                           onClick={() => {
                             setDeleteTargetId(record.id);
-                            setDeleteTargetName(`Human Trafficking Record ${record.id}`);
+                            setDeleteTargetName('Human Trafficking Record');
                           }}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -506,7 +515,6 @@ const HumanTrafficking: React.FC = () => {
             setShowAddModal(false);
             setFormData(buildInitialForm());
             setEditingId(null);
-            setViewingId(null);
           }
         }}
         formData={formData}
@@ -515,7 +523,7 @@ const HumanTrafficking: React.FC = () => {
         title={modalTitle}
         submitLabel={submitLabel}
         submitting={submitting}
-        viewMode={!!viewingId}
+        viewMode={false}
       />
 
       <DeleteModal

@@ -61,13 +61,31 @@ const NCPVehicles: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // TODO: Replace with actual API endpoint when available
-        // const response = await publicApi.get('/get-all-ncp-vehicles');
-        // For now, using empty array
-        setRecords([]);
+        const response = await publicApi.get('/ispec-ncp-vehicles/get-all-ispec-ncp-vehicles');
+        
+        // Handle different response structures (array or object with data property)
+        const responseData = Array.isArray(response.data) 
+          ? response.data 
+          : response.data?.data || [];
+          
+        const formattedRecords = responseData.map((item: any) => ({
+          id: item._id || item.id,
+          is_db_formed: item.is_db_formed || false,
+          no_cps_auth_lookfor_seize_ncp: item.no_cps_auth_lookfor_seize_ncp || 0,
+          no_ncp_veh_regularized: item.no_ncp_veh_regularized || 0,
+          no_ncp_owners_apprehended: item.no_ncp_owners_apprehended || 0,
+          no_ncp_owners_convicted: item.no_ncp_owners_convicted || 0,
+          no_ncp_owners_setfreebycourt: item.no_ncp_owners_setfreebycourt || 0,
+          no_ncp_owners_casepending: item.no_ncp_owners_casepending || 0,
+          remarks: item.remarks || '',
+        }));
+        
+        setRecords(formattedRecords);
       } catch (error) {
         console.error('Error fetching NCP vehicles records:', error);
         setRecords([]);
+        // Optionally show error to user
+        window.alert('Failed to load NCP vehicles records. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -92,20 +110,59 @@ const NCPVehicles: React.FC = () => {
         remarks: formData.remarks,
       };
 
-      let response;
       if (editingId) {
-        // TODO: Replace with actual API endpoint when available
-        // response = await api.put(`/update-ncp-vehicles/${editingId}`, payload);
-        console.log('Update NCP vehicles:', editingId, payload);
+        // Update existing record
+        const response = await api.put(`/ispec-ncp-vehicles/update-ispec-ncp-vehicle/${editingId}`, payload);
+        const updatedRecord = response.data?.data || response.data;
+        
+        if (updatedRecord) {
+          // Update the record in the list
+          setRecords(prevRecords => 
+            prevRecords.map(record => 
+              record.id === editingId 
+                ? { 
+                    ...record, 
+                    ...updatedRecord,
+                    id: updatedRecord._id || updatedRecord.id || record.id,
+                    is_db_formed: updatedRecord.is_db_formed || false,
+                    no_cps_auth_lookfor_seize_ncp: updatedRecord.no_cps_auth_lookfor_seize_ncp || 0,
+                    no_ncp_veh_regularized: updatedRecord.no_ncp_veh_regularized || 0,
+                    no_ncp_owners_apprehended: updatedRecord.no_ncp_owners_apprehended || 0,
+                    no_ncp_owners_convicted: updatedRecord.no_ncp_owners_convicted || 0,
+                    no_ncp_owners_setfreebycourt: updatedRecord.no_ncp_owners_setfreebycourt || 0,
+                    no_ncp_owners_casepending: updatedRecord.no_ncp_owners_casepending || 0,
+                    remarks: updatedRecord.remarks || '',
+                  } 
+                : record
+            )
+          );
+          window.alert('NCP vehicles record updated successfully!');
+        }
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // response = await api.post('/add-ncp-vehicles', payload);
-        console.log('Add NCP vehicles:', payload);
+        // Add new record
+        const response = await api.post('/ispec-ncp-vehicles/add-ispec-ncp-vehicle', payload);
+        const newRecord = response.data?.data || response.data;
+        
+        if (newRecord) {
+          // Add the new record to the list
+          setRecords(prevRecords => [
+            {
+              id: newRecord._id || newRecord.id,
+              is_db_formed: newRecord.is_db_formed || false,
+              no_cps_auth_lookfor_seize_ncp: newRecord.no_cps_auth_lookfor_seize_ncp || 0,
+              no_ncp_veh_regularized: newRecord.no_ncp_veh_regularized || 0,
+              no_ncp_owners_apprehended: newRecord.no_ncp_owners_apprehended || 0,
+              no_ncp_owners_convicted: newRecord.no_ncp_owners_convicted || 0,
+              no_ncp_owners_setfreebycourt: newRecord.no_ncp_owners_setfreebycourt || 0,
+              no_ncp_owners_casepending: newRecord.no_ncp_owners_casepending || 0,
+              remarks: newRecord.remarks || '',
+            },
+            ...prevRecords
+          ]);
+          
+          window.alert('NCP vehicles record created successfully!');
+        }
       }
-
-      // TODO: Refresh the list after successful submission
-      // const recordsResponse = await publicApi.get('/get-all-ncp-vehicles');
-      // Process and set records
 
       // Close modal and reset form
       setShowAddModal(false);
@@ -147,41 +204,35 @@ const NCPVehicles: React.FC = () => {
     setShowAddModal(true);
   };
 
-  const openViewModal = (record: NCPVehiclesRecord) => {
-    setViewingId(record.id);
-    setEditingId(null);
-    setFormData({
-      id: record.id,
-      is_db_formed: record.is_db_formed,
-      no_cps_auth_lookfor_seize_ncp: record.no_cps_auth_lookfor_seize_ncp,
-      no_ncp_veh_regularized: record.no_ncp_veh_regularized,
-      no_ncp_owners_apprehended: record.no_ncp_owners_apprehended,
-      no_ncp_owners_convicted: record.no_ncp_owners_convicted,
-      no_ncp_owners_setfreebycourt: record.no_ncp_owners_setfreebycourt,
-      no_ncp_owners_casepending: record.no_ncp_owners_casepending,
-      remarks: record.remarks,
-    });
-    setShowAddModal(true);
+  const handleView = (record: NCPVehiclesRecord) => {
+    navigate(`/illegal-spectrum/ncp-vehicles/view/${record.id}`);
   };
 
   const handleDeleteSubmit = async (id: string | number) => {
+    if (!id) {
+      console.error('No record ID provided for deletion');
+      window.alert('Error: No record ID provided for deletion');
+      return;
+    }
+
     setDeleting(true);
 
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/delete-ncp-vehicles/${id}`);
-      console.log('Delete NCP vehicles:', id);
-
-      // TODO: Refresh the list after successful deletion
-      // const recordsResponse = await publicApi.get('/get-all-ncp-vehicles');
-      // Process and set records
-
-      // Close modal
+      // Make the API call to delete the record
+      await api.delete(`/ispec-ncp-vehicles/delete-ispec-ncp-vehicle/${id}`);
+      
+      // Update the UI by removing the deleted record
+      setRecords(prevRecords => prevRecords.filter(record => record.id !== id));
+      
+      // Reset the delete target states
       setDeleteTargetId(null);
       setDeleteTargetName(null);
+      
+      // Show success message
+      window.alert('NCP vehicles record deleted successfully!');
     } catch (error: any) {
       console.error('Error deleting NCP vehicles record:', error);
-      alert(
+      window.alert(
         error?.response?.data?.message ||
         error?.message ||
         'Failed to delete NCP vehicles record. Please try again.'
@@ -393,7 +444,7 @@ const NCPVehicles: React.FC = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => openViewModal(record)}
+                          onClick={() => navigate(`/illegal-spectrum/ncp-vehicles/view/${record.id}`)}
                           className="text-muted-foreground hover:text-foreground"
                         >
                           <Eye className="h-4 w-4" />
@@ -524,7 +575,7 @@ const NCPVehicles: React.FC = () => {
           }
         }}
         id={deleteTargetId}
-        message={`Are you sure you want to delete "${deleteTargetName}"? This action cannot be undone.`}
+        message="Are you sure you want to delete this NCP Vehicles record? This action cannot be undone."
         onSubmit={handleDeleteSubmit}
         deleting={deleting}
         title="Delete NCP Vehicles Record"

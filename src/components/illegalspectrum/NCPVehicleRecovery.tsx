@@ -7,6 +7,7 @@ import { publicApi } from '../../lib/api';
 import api from '../../lib/api';
 import NCPVehicleRecoveryFormModal from '../modals/illegalspectrum/NCPVehicleRecoveryFormModal';
 import DeleteModal from '../UI/DeleteModal';
+import { useNavigate } from 'react-router-dom';
 
 interface NCPVehicleRecovery {
   _id?: string;
@@ -37,54 +38,47 @@ export interface NCPVehicleRecoveryFormState {
   remarks: string;
 }
 
+const buildInitialForm = (): NCPVehicleRecoveryFormState => ({
+  id: undefined,
+  date: '',
+  location: '',
+  activity_type: '',
+  veh_make_type: '',
+  vehno: '',
+  cnic_owner: '',
+  cnic_driver: '',
+  remarks: '',
+});
+
 const NCPVehicleRecovery: React.FC<NCPVehicleRecoveryProps> = ({ ncpVehiclesId }) => {
   const [records, setRecords] = useState<NCPVehicleRecovery[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [showModal, setShowModal] = useState<boolean>(false);
   const [editingRecord, setEditingRecord] = useState<NCPVehicleRecovery | null>(null);
-  const [viewingRecord, setViewingRecord] = useState<NCPVehicleRecovery | null>(null);
+  const [formData, setFormData] = useState<NCPVehicleRecoveryFormState>(buildInitialForm());
   const [submitting, setSubmitting] = useState<boolean>(false);
-  const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
-  const [recordToDeleteId, setRecordToDeleteId] = useState<string | number | undefined>(undefined);
-  const [recordToDeleteName, setRecordToDeleteName] = useState<string>('');
+  const [recordToDeleteId, setRecordToDeleteId] = useState<string | number | undefined>();
   const [deleting, setDeleting] = useState<boolean>(false);
-  
+  const navigate = useNavigate();
+
   // Search, Sort, and Pagination states
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
-  
-  const buildInitialForm = (): NCPVehicleRecoveryFormState => ({
-    id: undefined,
-    date: '',
-    location: '',
-    activity_type: '',
-    veh_make_type: '',
-    vehno: '',
-    cnic_owner: '',
-    cnic_driver: '',
-    remarks: '',
-  });
-
-  const [formData, setFormData] = useState<NCPVehicleRecoveryFormState>(buildInitialForm());
 
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      // const endpoint = ncpVehiclesId
-      //   ? `/ncp-vehicles/get-all-vehicle-recovery/${ncpVehiclesId}`
-      //   : '/ncp-vehicles/get-all-vehicle-recovery';
-      // const response = await publicApi.get(endpoint);
-      // const data = response.data?.data || response.data || [];
-      
-      // For now, using empty array
-      const data: any[] = [];
-      
-      const records: NCPVehicleRecovery[] = data.map((item: any) => ({
+      const response = await publicApi.get('/ispec-ncp-veh-recovery/get-all-ispec-ncp-veh-recovery');
+
+      // Handle different response structures (array or object with data property)
+      const responseData = Array.isArray(response.data)
+        ? response.data
+        : response.data?.data || [];
+
+      const records: NCPVehicleRecovery[] = responseData.map((item: any) => ({
         _id: item._id || item.id,
         id: item._id || item.id,
         date: item.date || '',
@@ -96,7 +90,7 @@ const NCPVehicleRecovery: React.FC<NCPVehicleRecoveryProps> = ({ ncpVehiclesId }
         cnic_driver: item.cnic_driver || '',
         remarks: item.remarks || '',
       }));
-      
+
       setRecords(records);
     } catch (err: any) {
       console.error('Error fetching NCP vehicle recovery:', err);
@@ -132,58 +126,57 @@ const NCPVehicleRecovery: React.FC<NCPVehicleRecoveryProps> = ({ ncpVehiclesId }
 
   const handleAdd = () => {
     setFormData(buildInitialForm());
-    setEditingRecord(null);
-    setViewingRecord(null);
-    setIsViewMode(false);
-    setShowModal(true);
+    setEditingRecord({
+      id: '',
+      date: '',
+      location: '',
+      activity_type: '',
+      veh_make_type: '',
+      vehno: '',
+      cnic_owner: '',
+      cnic_driver: '',
+      remarks: ''
+    });
   };
 
-  const handleView = async (record: NCPVehicleRecovery) => {
+  const handleView = (record: NCPVehicleRecovery) => {
     const recordId = record._id || record.id;
     if (!recordId) {
       return;
     }
-
-    setViewingRecord(record);
-    setEditingRecord(null);
-    setIsViewMode(true);
-    setFormData({
-      id: recordId,
-      date: formatDateForInput(record.date),
-      location: record.location,
-      activity_type: record.activity_type,
-      veh_make_type: record.veh_make_type,
-      vehno: record.vehno,
-      cnic_owner: record.cnic_owner,
-      cnic_driver: record.cnic_driver,
-      remarks: record.remarks,
-    });
-    setShowModal(true);
+    navigate(`/illegal-spectrum/ncp-vehicles-recovery/view/${recordId}`);
   };
 
   const handleEdit = (record: NCPVehicleRecovery) => {
     const recordId = record._id || record.id;
-    setEditingRecord(record);
-    setViewingRecord(null);
-    setIsViewMode(false);
-    setFormData({
+    if (!recordId) {
+      console.error('Cannot edit record: No ID found');
+      return;
+    }
+    
+    // Set the form data first
+    const formData = {
       id: recordId,
-      date: formatDateForInput(record.date),
-      location: record.location,
-      activity_type: record.activity_type,
-      veh_make_type: record.veh_make_type,
-      vehno: record.vehno,
-      cnic_owner: record.cnic_owner,
-      cnic_driver: record.cnic_driver,
-      remarks: record.remarks,
-    });
-    setShowModal(true);
+      date: formatDateForInput(record.date) || '',
+      location: record.location || '',
+      activity_type: record.activity_type || '',
+      veh_make_type: record.veh_make_type || '',
+      vehno: record.vehno || '',
+      cnic_owner: record.cnic_owner || '',
+      cnic_driver: record.cnic_driver || '',
+      remarks: record.remarks || ''
+    };
+    
+    // Update both form data and editing record
+    setFormData(formData);
+    setEditingRecord({ ...record });
+    
+    // Don't navigate, we'll handle it with the modal
   };
 
   const handleDelete = (record: NCPVehicleRecovery) => {
     const recordId = record._id || record.id;
     setRecordToDeleteId(recordId);
-    setRecordToDeleteName(`${record.vehno} - ${formatDate(record.date)}`);
     setShowDeleteModal(true);
   };
 
@@ -204,22 +197,25 @@ const NCPVehicleRecovery: React.FC<NCPVehicleRecoveryProps> = ({ ncpVehiclesId }
         ...(ncpVehiclesId && { ncp_vehicles_id: ncpVehiclesId }),
       };
 
-      if (editingRecord) {
-        // TODO: Replace with actual API endpoint when available
-        // await api.put(`/ncp-vehicles/update-vehicle-recovery/${formData.id}`, payload);
-        console.log('Update NCP vehicle recovery:', formData.id, payload);
+      // Check if we're in edit mode and have a valid ID
+      const isEditMode = formData.id || (editingRecord && (editingRecord.id || editingRecord._id));
+      const recordId = formData.id || (editingRecord && (editingRecord.id || editingRecord._id));
+
+      if (isEditMode && !recordId) {
+        throw new Error('Record ID is required for updating');
+      }
+
+      if (isEditMode && recordId) {
+        await api.put(`/ispec-ncp-veh-recovery/update-ispec-ncp-veh-recovery/${recordId}`, payload);
+        window.alert('NCP vehicle recovery updated successfully!');
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // await api.post('/ncp-vehicles/add-vehicle-recovery', payload);
-        console.log('Add NCP vehicle recovery:', payload);
+        await api.post('/ispec-ncp-veh-recovery/add-ispec-ncp-veh-recovery', payload);
+        window.alert('NCP vehicle recovery added successfully!');
       }
 
       await fetchRecords();
-      setShowModal(false);
       setFormData(buildInitialForm());
       setEditingRecord(null);
-      setViewingRecord(null);
-      setIsViewMode(false);
     } catch (error: any) {
       console.error('Error submitting NCP vehicle recovery:', error);
       alert(
@@ -236,17 +232,15 @@ const NCPVehicleRecovery: React.FC<NCPVehicleRecoveryProps> = ({ ncpVehiclesId }
     setDeleting(true);
 
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/ncp-vehicles/delete-vehicle-recovery/${id}`);
-      console.log('Delete NCP vehicle recovery:', id);
+      await api.delete(`/ispec-ncp-veh-recovery/delete-ispec-ncp-veh-recovery/${id}`);
+      window.alert('NCP vehicle recovery deleted successfully!');
 
       await fetchRecords();
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
-      setRecordToDeleteName('');
     } catch (error: any) {
       console.error('Error deleting NCP vehicle recovery:', error);
-      alert(
+      window.alert(
         error?.response?.data?.message ||
         error?.message ||
         'Failed to delete NCP vehicle recovery. Please try again.'
@@ -328,8 +322,27 @@ const NCPVehicleRecovery: React.FC<NCPVehicleRecoveryProps> = ({ ncpVehiclesId }
     return <ArrowDown className="h-4 w-4 ml-1 text-primary" />;
   };
 
+  const modalTitle = editingRecord ? 'Edit NCP Vehicle Recovery' : 'Add NCP Vehicle Recovery';
+  const submitLabel = editingRecord ? 'Update' : 'Add';
+
   return (
     <>
+      <NCPVehicleRecoveryFormModal
+        open={!!editingRecord}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingRecord(null);
+            setFormData(buildInitialForm());
+          }
+        }}
+        onSubmit={handleSubmit}
+        title={modalTitle}
+        submitLabel={submitLabel}
+        formData={formData}
+        setFormData={setFormData}
+        submitting={submitting}
+      />
+
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -516,31 +529,11 @@ const NCPVehicleRecovery: React.FC<NCPVehicleRecoveryProps> = ({ ncpVehiclesId }
         </CardContent>
       </Card>
 
-      <NCPVehicleRecoveryFormModal
-        open={showModal}
-        onOpenChange={(open) => {
-          if (!open && !submitting) {
-            setShowModal(false);
-            setFormData(buildInitialForm());
-            setEditingRecord(null);
-            setViewingRecord(null);
-            setIsViewMode(false);
-          }
-        }}
-        formData={formData}
-        setFormData={setFormData}
-        onSubmit={handleSubmit}
-        title={isViewMode ? 'View NCP Vehicle Recovery' : editingRecord ? 'Edit NCP Vehicle Recovery' : 'Add NCP Vehicle Recovery'}
-        submitLabel={editingRecord ? 'Save Changes' : 'Add NCP Vehicle Recovery'}
-        submitting={submitting}
-        viewMode={isViewMode}
-      />
-
       <DeleteModal
         open={showDeleteModal}
         onOpenChange={setShowDeleteModal}
         id={recordToDeleteId}
-        message={`Are you sure you want to delete "${recordToDeleteName}"? This action cannot be undone.`}
+        message="Are you sure you want to delete this record? This action cannot be undone."
         onSubmit={handleDeleteSubmit}
         deleting={deleting}
         title="Delete NCP Vehicle Recovery"

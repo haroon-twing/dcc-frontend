@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../UI/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../UI/Table';
 import { Button } from '../UI/Button';
-import { Eye, Edit, Trash2, Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, Pencil, Trash2, Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { publicApi } from '../../lib/api';
 import api from '../../lib/api';
 import MajorBlackMarketVendorFormModal from '../modals/illegalspectrum/MajorBlackMarketVendorFormModal';
@@ -71,18 +72,13 @@ const MajorBlackMarketVendors: React.FC<MajorBlackMarketVendorsProps> = ({ black
 
   const [formData, setFormData] = useState<MajorBlackMarketVendorFormState>(buildInitialForm());
 
+  const navigate = useNavigate();
+
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      // const endpoint = blackMarketDronesId
-      //   ? `/black-market-drones/get-all-major-vendors/${blackMarketDronesId}`
-      //   : '/black-market-drones/get-all-major-vendors';
-      // const response = await publicApi.get(endpoint);
-      // const data = response.data?.data || response.data || [];
-      
-      // For now, using empty array
-      const data: any[] = [];
+      const response = await publicApi.get('/ispec-blackmarket-vendors-in-region/get-all-ispec-blackmarket-vendors-in-region');
+      const data = response.data?.data || response.data || [];
       
       const records: MajorBlackMarketVendor[] = data.map((item: any) => ({
         _id: item._id || item.id,
@@ -118,27 +114,11 @@ const MajorBlackMarketVendors: React.FC<MajorBlackMarketVendorsProps> = ({ black
     setShowModal(true);
   };
 
-  const handleView = async (record: MajorBlackMarketVendor) => {
+  const handleView = (record: MajorBlackMarketVendor) => {
     const recordId = record._id || record.id;
-    if (!recordId) {
-      return;
+    if (recordId) {
+      navigate(`/illegal-spectrum/black-market-drones/vendors/details?id=${recordId}`);
     }
-
-    setViewingRecord(record);
-    setEditingRecord(null);
-    setIsViewMode(true);
-    setFormData({
-      id: recordId,
-      name: record.name,
-      present_address: record.present_address,
-      domicile: record.domicile,
-      is_fam_mem_terr: record.is_fam_mem_terr,
-      affiliation_with_terr_grp: record.affiliation_with_terr_grp,
-      main_trade: record.main_trade,
-      major_areas_supply: record.major_areas_supply,
-      remarks: record.remarks,
-    });
-    setShowModal(true);
   };
 
   const handleEdit = (record: MajorBlackMarketVendor) => {
@@ -181,55 +161,53 @@ const MajorBlackMarketVendors: React.FC<MajorBlackMarketVendorsProps> = ({ black
         main_trade: formData.main_trade,
         major_areas_supply: formData.major_areas_supply,
         remarks: formData.remarks,
-        ...(blackMarketDronesId && { black_market_drones_id: blackMarketDronesId }),
       };
 
-      if (editingRecord) {
-        // TODO: Replace with actual API endpoint when available
-        // await api.put(`/black-market-drones/update-major-vendor/${formData.id}`, payload);
-        console.log('Update major black market vendor:', formData.id, payload);
+      if (editingRecord?._id || editingRecord?.id) {
+        const recordId = editingRecord._id || editingRecord.id;
+        await api.put(`/ispec-blackmarket-vendors-in-region/update-ispec-blackmarket-vendors-in-region/${recordId}`, payload);
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // await api.post('/black-market-drones/add-major-vendor', payload);
-        console.log('Add major black market vendor:', payload);
+        await api.post('/ispec-blackmarket-vendors-in-region/add-ispec-blackmarket-vendors-in-region', payload);
       }
 
+      // Refresh the list after successful submission
       await fetchRecords();
+      
+      // Close modal and reset form
       setShowModal(false);
       setFormData(buildInitialForm());
       setEditingRecord(null);
-      setViewingRecord(null);
       setIsViewMode(false);
     } catch (error: any) {
-      console.error('Error submitting major black market vendor:', error);
+      console.error('Error submitting major vendor record:', error);
       alert(
         error?.response?.data?.message ||
         error?.message ||
-        `Failed to ${editingRecord ? 'update' : 'add'} major black market vendor. Please try again.`
+        `Failed to ${editingRecord ? 'update' : 'add'} major vendor record. Please try again.`
       );
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDeleteSubmit = async (id: string | number) => {
+  const handleDeleteSubmit = async () => {
+    if (!recordToDeleteId) return;
+    
     setDeleting(true);
-
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/black-market-drones/delete-major-vendor/${id}`);
-      console.log('Delete major black market vendor:', id);
-
+      await api.delete(`/ispec-blackmarket-vendors-in-region/delete-ispec-blackmarket-vendors-in-region/${recordToDeleteId}`);
+      
+      // Refresh the list after successful deletion
       await fetchRecords();
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
       setRecordToDeleteName('');
     } catch (error: any) {
-      console.error('Error deleting major black market vendor:', error);
+      console.error('Error deleting major vendor record:', error);
       alert(
         error?.response?.data?.message ||
         error?.message ||
-        'Failed to delete major black market vendor. Please try again.'
+        'Failed to delete major vendor record. Please try again.'
       );
     } finally {
       setDeleting(false);
@@ -400,27 +378,32 @@ const MajorBlackMarketVendors: React.FC<MajorBlackMarketVendorsProps> = ({ black
                     <TableCell>{record.present_address}</TableCell>
                     <TableCell>{record.main_trade || '-'}</TableCell>
                     <TableCell>{record.affiliation_with_terr_grp || '-'}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleView(record)}
-                          className="text-muted-foreground hover:text-foreground"
+                          className="h-8 w-8 p-0"
+                          title="View"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="secondary"
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(record)}
+                          className="h-8 w-8 p-0"
+                          title="Edit"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="destructive"
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(record)}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                          title="Delete"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

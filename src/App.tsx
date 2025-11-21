@@ -5,6 +5,8 @@ import { CommunicationProvider } from './contexts/CommunicationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Layout from './components/Layout';
 import './App.css';
+import IllegalWarehousesView from './pages/IllegalWarehousesView';
+import ActionsTakenAgainstIllegalWarehousesView from './pages/ActionsTakenAgainstIllegalWarehousesView';
 
 const LoginPage = React.lazy(() => import('./pages/Login'));
 const RegisterPage = React.lazy(() => import('./pages/Register'));
@@ -62,17 +64,46 @@ const ExtortionDetailsPage = React.lazy(() => import('./pages/ExtortionDetails')
 const MajorExtortionistDetailsPage = React.lazy(() => import('./pages/MajorExtortionistDetails'));
 const ArmsExplosivesUreaPage = React.lazy(() => import('./pages/ArmsExplosivesUrea'));
 const IllegalSimsPage = React.lazy(() => import('./pages/IllegalSims'));
+const IllegalSimsDetailsPage = React.lazy(() => import('./pages/IllegalSimsDetails'));
+const PrevalenceOfOutOfZoneSimsDetailsPage = React.lazy(() => import('./pages/PrevalenceOfOutOfZoneSimsDetails'));
 const IllegalWarehousesPage = React.lazy(() => import('./pages/IllegalWarehouses'));
+const IllegalWarehousesViewPage = React.lazy(() => import('./pages/IllegalWarehousesView'));
+const ActionsTakenAgainstIllegalWarehousesViewPage = React.lazy (() => import('./pages/ActionsTakenAgainstIllegalWarehousesView'));
 const NCPVehiclesPage = React.lazy(() => import('./pages/NCPVehicles'));
+const NCPVehiclesViewPage = React.lazy(() => import('./pages/NCPVehiclesView'));
+const NCPVehiclesDatabaseViewPage = React.lazy(() => import('./pages/NCPVehicleDatabaseView'));
+
+
+// const NCPVehiclesView = React.lazy(() => import('./pages/NCPVehiclesView'));
+
+// const NCPVehicleDatabaseView = React.lazy(() => import('./pages/NCPVehicleDatabaseView'));
+
+// const NCPVehicleRecoveryView = React.lazy(() => import('./pages/NCPVehicleRecoveryView'));
+
+// const NCPStatusByDistrictView = React.lazy(() => import('./pages/NCPStatusByDistrictView'));
 const HumanTraffickingPage = React.lazy(() => import('./pages/HumanTrafficking'));
+const NCPStatusByDistrictViewPage = React.lazy(() => import('./pages/NCPStatusByDistrictView'));
+const NCPVehiclesRecoveryViewPage = React.lazy(() => import('./pages/NCPVehicleRecoveryView'));
+const MajorModesAndMotivationsViewPage = React.lazy(() => import('./pages/MajorModesAndMotivationsView'));
+const HumanTraffickingDetailsPage = React.lazy(() => import('./pages/HumanTraffickingDetails'));
+
+// const ActionsTakenAgainstIllegalWarehousesView = React.lazy(() => import('./pages/ActionsTakenAgainstIllegalWarehousesView'));
+
+// const IllegalWarehousesView = React.lazy(() => import('./pages/IllegalWarehousesView'));
+
+// const MajorModesAndMotivationsView = React.lazy(() => import('./pages/MajorModesAndMotivationsView'));
 const SmugglingPage = React.lazy(() => import('./pages/Smuggling'));
+const SmugglingView = React.lazy(() => import('./pages/SmugglingView'));
 const HawalaHundiPage = React.lazy(() => import('./pages/HawalaHundi'));
 const HawalaHundiDetailsPage = React.lazy(() => import('./pages/HawalaHundiDetails'));
 const MajorHawalaHundiDealerDetailsPage = React.lazy(() => import('./pages/MajorHawalaHundiDealerDetails'));
 const HawalaHundiIncidentsDetailsPage = React.lazy(() => import('./pages/HawalaHundiIncidentsDetails'));
 const BlackMarketDronesPage = React.lazy(() => import('./pages/BlackMarketDrones'));
+const BlackMarketDronesDetailsPage = React.lazy(() => import('./pages/BlackMarketDronesDetails'));
+const ActionAgainstIllegalVendorsDetails = React.lazy(() => import('./pages/ActionAgainstIllegalVendorsDetails'));
 const PolicyAndLegislativeAmendmentDetails = React.lazy(() => import('./pages/PolicyAndLegislativeAmendmentDetails'));
 const IncidentsOfCrackdownDetails = React.lazy(() => import('./pages/IncidentsOfCrackdownDetails'));
+const MajorBlackMarketVendorDetails = React.lazy(() => import('./pages/MajorBlackMarketVendorDetails'));
 
 function App() {
   return (
@@ -441,10 +472,38 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
+          <Route path="/illegal-spectrum/illegal-sims/details" element={
+            <ProtectedRoute>
+              <Layout>
+                <IllegalSimsDetailsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/illegal-sims/prevalence-out-zone-sims/:id" element={
+            <ProtectedRoute>
+              <Layout>
+                <PrevalenceOfOutOfZoneSimsDetailsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
           <Route path="/illegal-spectrum/illegal-warehouses" element={
             <ProtectedRoute>
               <Layout>
                 <IllegalWarehousesPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/illegal-warehouses/View/:id" element={
+            <ProtectedRoute>
+              <Layout>
+                <IllegalWarehousesView/>
+              </Layout>
+            </ProtectedRoute>
+          } />
+           <Route path="/illegal-spectrum/actions-taken-against-illegal-warehouses/view/:id" element={
+            <ProtectedRoute>
+              <Layout>
+                <ActionsTakenAgainstIllegalWarehousesView/>
               </Layout>
             </ProtectedRoute>
           } />
@@ -455,6 +514,20 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
+          <Route path="/illegal-spectrum/ncp-vehicles/view/:id" element={
+            <ProtectedRoute>
+              <Layout>
+                <NCPVehiclesViewPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/ncp-vehicles-database/view/:id" element={
+            <ProtectedRoute>
+              <Layout>
+                <NCPVehiclesDatabaseViewPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
           <Route path="/illegal-spectrum/human-trafficking" element={
             <ProtectedRoute>
               <Layout>
@@ -462,12 +535,70 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
+         
+          <Route path="/illegal-spectrum/human-trafficking/details/:id" element={
+            <ProtectedRoute>
+              <Layout>
+                <HumanTraffickingDetailsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          
+          {/* NCP Status By District View */}
+          <Route 
+            path="/illegal-spectrum/ncp-status-by-district/view/:id" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <NCPStatusByDistrictViewPage />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* NCP Vehicles Recovery View */}
+          <Route 
+            path="/illegal-spectrum/ncp-vehicles-recovery/view/:id" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <NCPVehiclesRecoveryViewPage />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* Major Modes and Motivations View */}
+          <Route 
+            path="/illegal-spectrum/major-modes-view/:id" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MajorModesAndMotivationsViewPage />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
           <Route path="/illegal-spectrum/smuggling" element={
             <ProtectedRoute>
               <Layout>
                 <SmugglingPage />
               </Layout>
             </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/smuggling/view/:id" element={
+
+            <ProtectedRoute>
+
+              <Layout>
+
+                <SmugglingView />
+
+              </Layout>
+
+            </ProtectedRoute>
+
           } />
           <Route path="/illegal-spectrum/hawala-hundi" element={
             <ProtectedRoute>
@@ -501,6 +632,27 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <BlackMarketDronesPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/black-market-drones/details" element={
+            <ProtectedRoute>
+              <Layout>
+                <BlackMarketDronesDetailsPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/black-market-drones/vendors/details" element={
+            <ProtectedRoute>
+              <Layout>
+                <MajorBlackMarketVendorDetails />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/illegal-spectrum/action-against-illegal-vendors/details" element={
+            <ProtectedRoute>
+              <Layout>
+                <ActionAgainstIllegalVendorsDetails />
               </Layout>
             </ProtectedRoute>
           } />

@@ -183,23 +183,6 @@ const HawalaHundiDetails: React.FC = () => {
                 <p className="text-sm font-medium text-muted-foreground">% Change Inflow</p>
                 <p className="text-foreground">{hawalaHundiData.per_change_inflow.toFixed(2)}%</p>
               </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Status</p>
-                <div className="flex items-center">
-                  {hawalaHundiData.is_active ? (
-                    <>
-                      <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
-                      <span>Active</span>
-                    </>
-                  ) : (
-                    <>
-                      <div className="h-2 w-2 rounded-full bg-red-500 mr-2"></div>
-                      <span>Inactive</span>
-                    </>
-                  )}
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>

@@ -69,14 +69,34 @@ const IllegalSims: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
 
+  // Fetch all illegal SIM records
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // TODO: Replace with actual API endpoint when available
-        // const response = await publicApi.get('/get-all-illegal-sims');
-        // For now, using empty array
-        setRecords([]);
+        const response = await publicApi.get('/ispec-illegal-sims/get-all-ispec-illegal-sims');
+        const data = response.data?.data || response.data || [];
+        
+        const formattedRecords: IllegalSimsRecord[] = data.map((item: any) => ({
+          id: item._id || item.id,
+          no_vend_selling_ill_sims: item.no_vend_selling_ill_sims || 0,
+          is_db_formed: Boolean(item.is_db_formed),
+          no_vend_apprehended: item.no_vend_apprehended || 0,
+          no_vend_convicted: item.no_vend_convicted || 0,
+          no_vend_setfree: item.no_vend_setfree || 0,
+          no_cases_pending_appr_vendors: item.no_cases_pending_appr_vendors || 0,
+          no_people_appr_using_ill_sims: item.no_people_appr_using_ill_sims || 0,
+          no_people_appr_using_ill_sims_convicted: item.no_people_appr_using_ill_sims_convicted || 0,
+          no_people_appr_using_ill_sims_setfree: item.no_people_appr_using_ill_sims_setfree || 0,
+          no_cases_pending_appr_people: item.no_cases_pending_appr_people || 0,
+          policy_action_taken: item.policy_action_taken || '',
+          out_zone_sims_detected: item.out_zone_sims_detected || 0,
+          afghan_sims_detected: item.afghan_sims_detected || 0,
+          per_out_zone_sims_found_to_be_afghan: item.per_out_zone_sims_found_to_be_afghan || 0,
+          remarks: item.remarks || '',
+        }));
+        
+        setRecords(formattedRecords);
       } catch (error) {
         console.error('Error fetching illegal sims records:', error);
         setRecords([]);
@@ -113,18 +133,37 @@ const IllegalSims: React.FC = () => {
 
       let response;
       if (editingId) {
-        // TODO: Replace with actual API endpoint when available
-        // response = await api.put(`/update-illegal-sims/${editingId}`, payload);
-        console.log('Update illegal sims:', editingId, payload);
+        // Update existing record
+        response = await api.put(`/ispec-illegal-sims/update-ispec-illegal-sim/${editingId}`, payload);
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // response = await api.post('/add-illegal-sims', payload);
-        console.log('Add illegal sims:', payload);
+        // Add new record
+        response = await api.post('/ispec-illegal-sims/add-ispec-illegal-sim', payload);
       }
 
-      // TODO: Refresh the list after successful submission
-      // const recordsResponse = await publicApi.get('/get-all-illegal-sims');
-      // Process and set records
+      // Refresh the list after successful submission
+      const recordsResponse = await publicApi.get('/ispec-illegal-sims/get-all-ispec-illegal-sims');
+      const data = recordsResponse.data?.data || recordsResponse.data || [];
+      
+      const formattedRecords: IllegalSimsRecord[] = data.map((item: any) => ({
+        id: item._id || item.id,
+        no_vend_selling_ill_sims: item.no_vend_selling_ill_sims || 0,
+        is_db_formed: Boolean(item.is_db_formed),
+        no_vend_apprehended: item.no_vend_apprehended || 0,
+        no_vend_convicted: item.no_vend_convicted || 0,
+        no_vend_setfree: item.no_vend_setfree || 0,
+        no_cases_pending_appr_vendors: item.no_cases_pending_appr_vendors || 0,
+        no_people_appr_using_ill_sims: item.no_people_appr_using_ill_sims || 0,
+        no_people_appr_using_ill_sims_convicted: item.no_people_appr_using_ill_sims_convicted || 0,
+        no_people_appr_using_ill_sims_setfree: item.no_people_appr_using_ill_sims_setfree || 0,
+        no_cases_pending_appr_people: item.no_cases_pending_appr_people || 0,
+        policy_action_taken: item.policy_action_taken || '',
+        out_zone_sims_detected: item.out_zone_sims_detected || 0,
+        afghan_sims_detected: item.afghan_sims_detected || 0,
+        per_out_zone_sims_found_to_be_afghan: item.per_out_zone_sims_found_to_be_afghan || 0,
+        remarks: item.remarks || '',
+      }));
+      
+      setRecords(formattedRecords);
 
       // Close modal and reset form
       setShowAddModal(false);
@@ -174,42 +213,40 @@ const IllegalSims: React.FC = () => {
   };
 
   const openViewModal = (record: IllegalSimsRecord) => {
-    setViewingId(record.id);
-    setEditingId(null);
-    setFormData({
-      id: record.id,
-      no_vend_selling_ill_sims: record.no_vend_selling_ill_sims,
-      is_db_formed: record.is_db_formed,
-      no_vend_apprehended: record.no_vend_apprehended,
-      no_vend_convicted: record.no_vend_convicted,
-      no_vend_setfree: record.no_vend_setfree,
-      no_cases_pending_appr_vendors: record.no_cases_pending_appr_vendors,
-      no_people_appr_using_ill_sims: record.no_people_appr_using_ill_sims,
-      no_people_appr_using_ill_sims_convicted: record.no_people_appr_using_ill_sims_convicted,
-      no_people_appr_using_ill_sims_setfree: record.no_people_appr_using_ill_sims_setfree,
-      no_cases_pending_appr_people: record.no_cases_pending_appr_people,
-      policy_action_taken: record.policy_action_taken,
-      out_zone_sims_detected: record.out_zone_sims_detected,
-      afghan_sims_detected: record.afghan_sims_detected,
-      per_out_zone_sims_found_to_be_afghan: record.per_out_zone_sims_found_to_be_afghan,
-      remarks: record.remarks,
-    });
-    setShowAddModal(true);
+    navigate(`/illegal-spectrum/illegal-sims/details?id=${record.id}`);
   };
 
   const handleDeleteSubmit = async (id: string | number) => {
     setDeleting(true);
 
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/delete-illegal-sims/${id}`);
-      console.log('Delete illegal sims:', id);
+      // Delete record
+      await api.delete(`/ispec-illegal-sims/delete-ispec-illegal-sim/${id}`);
 
-      // TODO: Refresh the list after successful deletion
-      // const recordsResponse = await publicApi.get('/get-all-illegal-sims');
-      // Process and set records
-
-      // Close modal
+      // Refresh the list after successful deletion
+      const response = await publicApi.get('/ispec-illegal-sims/get-all-ispec-illegal-sims');
+      const data = response.data?.data || response.data || [];
+      
+      const formattedRecords: IllegalSimsRecord[] = data.map((item: any) => ({
+        id: item._id || item.id,
+        no_vend_selling_ill_sims: item.no_vend_selling_ill_sims || 0,
+        is_db_formed: Boolean(item.is_db_formed),
+        no_vend_apprehended: item.no_vend_apprehended || 0,
+        no_vend_convicted: item.no_vend_convicted || 0,
+        no_vend_setfree: item.no_vend_setfree || 0,
+        no_cases_pending_appr_vendors: item.no_cases_pending_appr_vendors || 0,
+        no_people_appr_using_ill_sims: item.no_people_appr_using_ill_sims || 0,
+        no_people_appr_using_ill_sims_convicted: item.no_people_appr_using_ill_sims_convicted || 0,
+        no_people_appr_using_ill_sims_setfree: item.no_people_appr_using_ill_sims_setfree || 0,
+        no_cases_pending_appr_people: item.no_cases_pending_appr_people || 0,
+        policy_action_taken: item.policy_action_taken || '',
+        out_zone_sims_detected: item.out_zone_sims_detected || 0,
+        afghan_sims_detected: item.afghan_sims_detected || 0,
+        per_out_zone_sims_found_to_be_afghan: item.per_out_zone_sims_found_to_be_afghan || 0,
+        remarks: item.remarks || '',
+      }));
+      
+      setRecords(formattedRecords);
       setDeleteTargetId(null);
       setDeleteTargetName(null);
     } catch (error: any) {
@@ -422,30 +459,35 @@ const IllegalSims: React.FC = () => {
                     <TableCell>{record.no_vend_apprehended}</TableCell>
                     <TableCell>{record.no_people_appr_using_ill_sims}</TableCell>
                     <TableCell>{record.out_zone_sims_detected}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => openViewModal(record)}
-                          className="text-muted-foreground hover:text-foreground"
+                          className="h-8 w-8 p-0"
+                          title="View"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="secondary"
+                          variant="ghost"
                           size="sm"
                           onClick={() => openEditModal(record)}
+                          className="h-8 w-8 p-0"
+                          title="Edit"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="destructive"
+                          variant="ghost"
                           size="sm"
                           onClick={() => {
                             setDeleteTargetId(record.id);
                             setDeleteTargetName(`Illegal Sims Record ${record.id}`);
                           }}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                          title="Delete"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

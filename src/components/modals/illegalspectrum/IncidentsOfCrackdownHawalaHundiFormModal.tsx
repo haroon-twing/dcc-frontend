@@ -95,18 +95,6 @@ const IncidentsOfCrackdownHawalaHundiFormModal: React.FC<IncidentsOfCrackdownHaw
             placeholder="Additional notes"
           />
         </div>
-        <div>
-          <label className="flex items-center space-x-2 text-sm text-foreground">
-            <input
-              type="checkbox"
-              checked={formData.is_active}
-              onChange={(e) => handleChange('is_active', e.target.checked)}
-              disabled={viewMode}
-              className="h-4 w-4 rounded border-input bg-background text-primary focus:ring-primary"
-            />
-            <span>Active</span>
-          </label>
-        </div>
 
         {!viewMode && (
           <div className="flex justify-end space-x-2 pt-4 border-t">
