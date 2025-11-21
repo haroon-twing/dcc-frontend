@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../UI/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../UI/Table';
 import { Button } from '../UI/Button';
@@ -57,6 +58,7 @@ const NCPVehiclesDatabase: React.FC<NCPVehiclesDatabaseProps> = ({ ncpVehiclesId
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
   
+  // Utility function to build initial form state
   const buildInitialForm = (): NCPVehiclesDatabaseFormState => ({
     id: undefined,
     register_date: '',
@@ -69,22 +71,41 @@ const NCPVehiclesDatabase: React.FC<NCPVehiclesDatabaseProps> = ({ ncpVehiclesId
     remarks: '',
   });
 
+  // Map API response to form data
+  const mapRecordToFormData = (record: any): NCPVehiclesDatabaseFormState => ({
+    id: record._id || record.id,
+    register_date: formatDateForInput(record.register_date || ''),
+    address: record.address || '',
+    cnic_owner: record.cnic_owner || '',
+    veh_make_type: record.veh_make_type || '',
+    vehno: record.vehno || '',
+    acquisition_method: record.acquisition_method || '',
+    present_use: record.present_use || '',
+    remarks: record.remarks || '',
+  });
+
+  // Reset form and modal state
+  const resetFormAndModal = () => {
+    setFormData(buildInitialForm());
+    setEditingRecord(null);
+    setViewingRecord(null);
+    setIsViewMode(false);
+    setShowModal(false);
+  };
+
   const [formData, setFormData] = useState<NCPVehiclesDatabaseFormState>(buildInitialForm());
 
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API endpoint when available
-      // const endpoint = ncpVehiclesId
-      //   ? `/ncp-vehicles/get-all-vehicles-database/${ncpVehiclesId}`
-      //   : '/ncp-vehicles/get-all-vehicles-database';
-      // const response = await publicApi.get(endpoint);
-      // const data = response.data?.data || response.data || [];
+      const response = await publicApi.get('/ispec-ncp-veh-database/get-all-ispec-ncp-veh-database');
       
-      // For now, using empty array
-      const data: any[] = [];
+      // Handle different response structures (array or object with data property)
+      const responseData = Array.isArray(response.data) 
+        ? response.data 
+        : response.data?.data || [];
       
-      const records: NCPVehiclesDatabase[] = data.map((item: any) => ({
+      const records: NCPVehiclesDatabase[] = responseData.map((item: any) => ({
         _id: item._id || item.id,
         id: item._id || item.id,
         register_date: item.register_date || '',
@@ -131,52 +152,23 @@ const NCPVehiclesDatabase: React.FC<NCPVehiclesDatabaseProps> = ({ ncpVehiclesId
   };
 
   const handleAdd = () => {
-    setFormData(buildInitialForm());
-    setEditingRecord(null);
-    setViewingRecord(null);
-    setIsViewMode(false);
+    resetFormAndModal();
     setShowModal(true);
   };
 
-  const handleView = async (record: NCPVehiclesDatabase) => {
-    const recordId = record._id || record.id;
-    if (!recordId) {
-      return;
-    }
+  const navigate = useNavigate();
 
-    setViewingRecord(record);
-    setEditingRecord(null);
-    setIsViewMode(true);
-    setFormData({
-      id: recordId,
-      register_date: formatDateForInput(record.register_date),
-      address: record.address,
-      cnic_owner: record.cnic_owner,
-      veh_make_type: record.veh_make_type,
-      vehno: record.vehno,
-      acquisition_method: record.acquisition_method,
-      present_use: record.present_use,
-      remarks: record.remarks,
-    });
-    setShowModal(true);
+  const handleView = (record: NCPVehiclesDatabase) => {
+    const recordId = record._id || record.id;
+    if (recordId) {
+      navigate(`/illegal-spectrum/ncp-vehicles-database/view/${recordId}`);
+    }
   };
 
   const handleEdit = (record: NCPVehiclesDatabase) => {
-    const recordId = record._id || record.id;
     setEditingRecord(record);
-    setViewingRecord(null);
+    setFormData(mapRecordToFormData(record));
     setIsViewMode(false);
-    setFormData({
-      id: recordId,
-      register_date: formatDateForInput(record.register_date),
-      address: record.address,
-      cnic_owner: record.cnic_owner,
-      veh_make_type: record.veh_make_type,
-      vehno: record.vehno,
-      acquisition_method: record.acquisition_method,
-      present_use: record.present_use,
-      remarks: record.remarks,
-    });
     setShowModal(true);
   };
 
@@ -205,21 +197,19 @@ const NCPVehiclesDatabase: React.FC<NCPVehiclesDatabaseProps> = ({ ncpVehiclesId
       };
 
       if (editingRecord) {
-        // TODO: Replace with actual API endpoint when available
-        // await api.put(`/ncp-vehicles/update-vehicle-database/${formData.id}`, payload);
-        console.log('Update NCP vehicle database:', formData.id, payload);
+        // Update existing record
+        await api.put(`/ispec-ncp-veh-database/update-ispec-ncp-veh-database/${formData.id}`, payload);
+        window.alert('NCP vehicle record updated successfully!');
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // await api.post('/ncp-vehicles/add-vehicle-database', payload);
-        console.log('Add NCP vehicle database:', payload);
+        // Add new record
+        const response = await api.post('/ispec-ncp-veh-database/add-ispec-ncp-veh-database', payload);
+        
+        // Show success message
+        window.alert('NCP vehicle added to database successfully!');
       }
 
       await fetchRecords();
-      setShowModal(false);
-      setFormData(buildInitialForm());
-      setEditingRecord(null);
-      setViewingRecord(null);
-      setIsViewMode(false);
+      resetFormAndModal();
     } catch (error: any) {
       console.error('Error submitting NCP vehicle database:', error);
       alert(
@@ -236,10 +226,12 @@ const NCPVehiclesDatabase: React.FC<NCPVehiclesDatabaseProps> = ({ ncpVehiclesId
     setDeleting(true);
 
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/ncp-vehicles/delete-vehicle-database/${id}`);
-      console.log('Delete NCP vehicle database:', id);
-
+      await api.delete(`/ispec-ncp-veh-database/delete-ispec-ncp-veh-database/${id}`);
+      
+      // Show success message
+      window.alert('NCP vehicle record deleted successfully!');
+      
+      // Refresh the records list
       await fetchRecords();
       setShowDeleteModal(false);
       setRecordToDeleteId(undefined);
@@ -520,11 +512,7 @@ const NCPVehiclesDatabase: React.FC<NCPVehiclesDatabaseProps> = ({ ncpVehiclesId
         open={showModal}
         onOpenChange={(open) => {
           if (!open && !submitting) {
-            setShowModal(false);
-            setFormData(buildInitialForm());
-            setEditingRecord(null);
-            setViewingRecord(null);
-            setIsViewMode(false);
+            resetFormAndModal();
           }
         }}
         formData={formData}
@@ -540,7 +528,7 @@ const NCPVehiclesDatabase: React.FC<NCPVehiclesDatabaseProps> = ({ ncpVehiclesId
         open={showDeleteModal}
         onOpenChange={setShowDeleteModal}
         id={recordToDeleteId}
-        message={`Are you sure you want to delete "${recordToDeleteName}"? This action cannot be undone.`}
+        message="Are you sure you want to delete this record? This action cannot be undone."
         onSubmit={handleDeleteSubmit}
         deleting={deleting}
         title="Delete NCP Vehicle from Database"

@@ -51,22 +51,37 @@ const IllegalWarehouses: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        // TODO: Replace with actual API endpoint when available
-        // const response = await publicApi.get('/get-all-illegal-warehouses');
-        // For now, using empty array
-        setRecords([]);
-      } catch (error) {
-        console.error('Error fetching illegal warehouses records:', error);
-        setRecords([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const response = await publicApi.get('/ispec-illegal-warehouse/get-all-ispec-illegal-warehouse');
+      
+      // Handle different response structures (array or object with data property)
+      const responseData = Array.isArray(response.data)
+        ? response.data
+        : response.data?.data || [];
 
+      // Map the API response to the expected record format
+      const mappedRecords: IllegalWarehousesRecord[] = responseData.map((item: any) => ({
+        id: item._id || item.id,
+        is_db_formed: item.is_db_formed || false,
+        no_ill_wh_owner_apprehended: item.no_ill_wh_owner_apprehended || 0,
+        no_ill_wh_owner_convicted: item.no_ill_wh_owner_convicted || 0,
+        no_ill_wh_owner_setfreebycourt: item.no_ill_wh_owner_setfreebycourt || 0,
+        no_appr_ill_wh_owner_case_pending: item.no_appr_ill_wh_owner_case_pending || 0,
+        remarks: item.remarks || '',
+      }));
+
+      setRecords(mappedRecords);
+    } catch (error) {
+      console.error('Error fetching illegal warehouses records:', error);
+      setRecords([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -84,20 +99,16 @@ const IllegalWarehouses: React.FC = () => {
         remarks: formData.remarks,
       };
 
-      let response;
       if (editingId) {
-        // TODO: Replace with actual API endpoint when available
-        // response = await api.put(`/update-illegal-warehouses/${editingId}`, payload);
-        console.log('Update illegal warehouses:', editingId, payload);
+        await api.put(`/ispec-illegal-warehouse/update-ispec-illegal-warehouse/${editingId}`, payload);
+        window.alert('Illegal warehouse record updated successfully!');
       } else {
-        // TODO: Replace with actual API endpoint when available
-        // response = await api.post('/add-illegal-warehouses', payload);
-        console.log('Add illegal warehouses:', payload);
+        await api.post('/ispec-illegal-warehouse/add-ispec-illegal-warehouse', payload);
+        window.alert('Illegal warehouse record added successfully!');
       }
 
-      // TODO: Refresh the list after successful submission
-      // const recordsResponse = await publicApi.get('/get-all-illegal-warehouses');
-      // Process and set records
+      // Refresh the list after successful submission
+      await fetchData();
 
       // Close modal and reset form
       setShowAddModal(false);
@@ -105,7 +116,7 @@ const IllegalWarehouses: React.FC = () => {
       setEditingId(null);
     } catch (error: any) {
       console.error('Error submitting illegal warehouses record:', error);
-      alert(
+      window.alert(
         error?.response?.data?.message ||
         error?.message ||
         `Failed to ${editingId ? 'update' : 'add'} illegal warehouses record. Please try again.`
@@ -138,38 +149,25 @@ const IllegalWarehouses: React.FC = () => {
   };
 
   const openViewModal = (record: IllegalWarehousesRecord) => {
-    setViewingId(record.id);
-    setEditingId(null);
-    setFormData({
-      id: record.id,
-      is_db_formed: record.is_db_formed,
-      no_ill_wh_owner_apprehended: record.no_ill_wh_owner_apprehended,
-      no_ill_wh_owner_convicted: record.no_ill_wh_owner_convicted,
-      no_ill_wh_owner_setfreebycourt: record.no_ill_wh_owner_setfreebycourt,
-      no_appr_ill_wh_owner_case_pending: record.no_appr_ill_wh_owner_case_pending,
-      remarks: record.remarks,
-    });
-    setShowAddModal(true);
+    navigate(`/illegal-warehouses/view/${record.id}`);
   };
 
   const handleDeleteSubmit = async (id: string | number) => {
     setDeleting(true);
 
     try {
-      // TODO: Replace with actual API endpoint when available
-      // await api.delete(`/delete-illegal-warehouses/${id}`);
-      console.log('Delete illegal warehouses:', id);
+      await api.delete(`/ispec-illegal-warehouse/delete-ispec-illegal-warehouse/${id}`);
+      window.alert('Illegal warehouse record deleted successfully!');
 
-      // TODO: Refresh the list after successful deletion
-      // const recordsResponse = await publicApi.get('/get-all-illegal-warehouses');
-      // Process and set records
+      // Refresh the list after successful deletion
+      await fetchData();
 
       // Close modal
       setDeleteTargetId(null);
       setDeleteTargetName(null);
     } catch (error: any) {
       console.error('Error deleting illegal warehouses record:', error);
-      alert(
+      window.alert(
         error?.response?.data?.message ||
         error?.message ||
         'Failed to delete illegal warehouses record. Please try again.'
@@ -494,7 +492,7 @@ const IllegalWarehouses: React.FC = () => {
           }
         }}
         id={deleteTargetId}
-        message={`Are you sure you want to delete "${deleteTargetName}"? This action cannot be undone.`}
+        message="Are you sure you want to delete this record? This action cannot be undone."
         onSubmit={handleDeleteSubmit}
         deleting={deleting}
         title="Delete Illegal Warehouses Record"

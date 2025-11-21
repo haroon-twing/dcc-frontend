@@ -2,7 +2,7 @@ import React from 'react';
 import Modal from '../../UI/Modal';
 import { Button } from '../../UI/Button';
 import Input from '../../UI/Input';
-import { NCPVehicleRecoveryFormState } from '../../illegalspectrum/NCPVehicleRecovery';
+import { NCPVehicleRecoveryFormState } from '../../../components/illegalspectrum/NCPVehicleRecovery';
 
 interface NCPVehicleRecoveryFormModalProps {
   open: boolean;
